@@ -1,8 +1,8 @@
 Slides
 ======
 
-Slides is the awesome Elm framework, inspired by [reveal.js](http://lab.hakim.se/reveal-js/), that allows you to quickly
-put together a presentation. [See it running](http://xarvh.github.io/talk-elm/).
+Slides is an awesome Elm presentation framework, inspired by [reveal.js](http://lab.hakim.se/reveal-js/).
+[See it running](http://xarvh.github.io/talk-elm/).
 
 ```elm
 import Slides exposing (..)
@@ -30,8 +30,11 @@ Slides is customizable and, since it follows the [Elm Architecture](http://guide
 Slides can be used like any other Elm component.
 
 
-### Controls
+## Controls
 By default, a Slides app will respond to these controls:
+
+    - Click on window bottom or right: Next slide
+    - Click on window top or left: Previous slide
 
     - D, L, Arrow Right, Enter and Spacebar: Next slide/fragment
     - A, H, Arrow Left: Previous slide/fragment
@@ -39,13 +42,8 @@ By default, a Slides app will respond to these controls:
     - End: Last slide
     - P: pause animation (useful for debugging custom animations)
 
-    - Click on window bottom or right: Next slide
-    - Click on window top or left: Previous slide
 
-    - TODO: touch/swipes!
-
-
-### Style customisation
+## Style customisation
 This is the DOM structure for your custom CSS:
 ```css
     body
@@ -55,4 +53,12 @@ This is the DOM structure for your custom CSS:
                     .fragment-content
 ```
 
-TODO: provide a few different CSS examples.
+
+## TODO
+
+Add more built-in slide and fragment animations.
+
+Add more ready-to-use CSS themes.
+
+Add support for touch/gestures.
+

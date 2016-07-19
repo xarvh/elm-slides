@@ -154,6 +154,8 @@ type SlideRelativeOrder
     | LargerIndex
 
 {-| Tells you what a visible slide is doing.
+    The `Float` used by the `Moving` constructor is for the animation completion that runs between 0 and 1,
+    0 when the animation hasn't yet started and 1 when it is completed.
 -}
 type SlideAnimation
     = Still
@@ -229,10 +231,8 @@ fragmentAttributesOpacity completion =
     ]
 
 
-{-|
-    Default configuration options.
-
-    I called it `slidesDefaultOptions` instead than just `defaultOptions` because you can't use `{ Slides.defaultOptions | whatever... }`
+{-| Default configuration options.
+    It is named `slidesDefaultOptions` instead than just `defaultOptions` because you can't use `{ Slides.defaultOptions | whatever... }`
     so at least it is possible to `import Slides exposing (slidesDefaultOptions)` that does not pollute the scope.
 
     ```
