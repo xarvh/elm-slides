@@ -76,10 +76,10 @@ Configuration options:
 * `slidePixelSize` &mdash; `width` and `height` geometry of the slide area, in pixel.
    While the slide will be scaled to the window size, the internal coordinates of the slide will refer to these values.
 
-* `easingFunction` &mdash: Any f : [0, 1] -> [0, 1]
+* `easingFunction` &mdash; Any f : [0, 1] -> [0, 1]
   The standard ones are available in Elm's [easing-functions](http://package.elm-lang.org/packages/elm-community/easing-functions/1.0.1/).
 
-* `slideAttributes` &mdash: The function used to customize the slide animation.
+* `slideAttributes` &mdash; The function used to customize the slide animation.
   It takes the slide state and motion as argument, and produces a list of DOM attributes (usually just the `style`
   attribute, but you can add `class` or anything else you need) that can be used to animate the slides.
 
@@ -232,9 +232,10 @@ fragmentAttributesOpacity completion =
 {-|
     Default configuration options.
 
-    I called them `slidesDefaultOptions` instead than just `defaultOptions` because you can't use `{ Slides.defaultOptions | whatever... }`
+    I called it `slidesDefaultOptions` instead than just `defaultOptions` because you can't use `{ Slides.defaultOptions | whatever... }`
     so at least it is possible to `import Slides exposing (slidesDefaultOptions)` that does not pollute the scope.
 
+    ```
     { slidePixelSize =
         { height = 700
         , width = 960
@@ -270,6 +271,7 @@ fragmentAttributesOpacity completion =
             }
         ]
     }
+    ```
 -}
 slidesDefaultOptions : Options
 slidesDefaultOptions =
@@ -342,6 +344,7 @@ slide2 = htmlFragments
     , div [] [ text "Then I appear"
     , div [] [ text "and then I appear!"
     ]
+```
 -}
 htmlFragments : List (Html Message) -> Slide
 htmlFragments htmlNodes =
