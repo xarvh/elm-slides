@@ -27,7 +27,7 @@ import AnimationFrame
 import Array exposing (Array)
 import Css exposing (px, pct)
 import Ease
-import FragmentAnimation
+import Slides.FragmentAnimation as FragmentAnimation
 import Html exposing (Html, div, section)
 import Html.Attributes exposing (class)
 import Html.App as App
@@ -35,7 +35,7 @@ import Keyboard
 import Markdown
 import Mouse
 import Navigation
-import SlideAnimation
+import Slides.SlideAnimation as SlideAnimation
 import SmoothAnimator
 import String
 import StringUnindent

@@ -8,8 +8,8 @@
     ],
     "exposed-modules": [
         "Slides",
-        "SlideAnimation",
-        "FragmentAnimation"
+        "Slides.SlideAnimation",
+        "Slides.FragmentAnimation"
     ],
     "dependencies": {
         "elm-community/easing-functions": "1.0.1 <= v < 2.0.0",

@@ -1,4 +1,4 @@
-module FragmentAnimation exposing (..)
+module Slides.FragmentAnimation exposing (..)
 
 {-|
 
