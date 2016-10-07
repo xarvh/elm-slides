@@ -6,11 +6,6 @@ module Slides
         , app
         , Options
         , slidesDefaultOptions
-        , SlideAttributes
-        , FragmentAttributes
-        , SlideAnimation(..)
-        , SlideMotionDirection(..)
-        , SlideRelativeOrder(..)
         , md
         , mdFragments
         , html
@@ -22,7 +17,7 @@ module Slides
 @docs app, html, htmlFragments, md, mdFragments
 
 # Options
-@docs Options, slidesDefaultOptions, SlideAttributes, FragmentAttributes, SlideAnimation, SlideMotionDirection, SlideRelativeOrder
+@docs Options, slidesDefaultOptions
 
 # Elm Architecture
 @docs Message, Model, program
@@ -31,6 +26,7 @@ module Slides
 import AnimationFrame
 import Array exposing (Array)
 import Ease
+import FragmentAnimation
 import Html exposing (Html, div, section)
 import Html.Attributes exposing (class, style)
 import Html.App as App
@@ -38,12 +34,15 @@ import Keyboard
 import Markdown
 import Mouse
 import Navigation
+import SlideAnimation
 import SmoothAnimator
 import String
 import StringUnindent
 import Task
 import Time
 import Window
+
+
 
 
 --
@@ -74,11 +73,11 @@ Configuration options:
 * `easingFunction` &mdash; Any f : [0, 1] -> [0, 1]
   The standard ones are available in Elm's [easing-functions](http://package.elm-lang.org/packages/elm-community/easing-functions/1.0.1/).
 
-* `slideAttributes` &mdash; The function used to customize the slide animation.
+* `slideAnimator` &mdash; The function used to customize the slide animation.
   It takes the slide state and motion as argument, and produces a list of DOM attributes (usually just the `style`
   attribute, but you can add `class` or anything else you need) that can be used to animate the slides.
 
-* `fragmentAttributes` &mdash; the function used to animate a fragment within a slide.
+* `fragmentAnimator` &mdash; the function used to animate a fragment within a slide.
   It takes the fragment completion from 0 to 1 (0 being invisible and 1 being fully visible) and produces a list of Dom attributes
   (as above, usually just the `style` attribute will suffice).
 
@@ -89,8 +88,8 @@ Configuration options:
 type alias Options =
     { slidePixelSize : { height : Int, width : Int }
     , easingFunction : Float -> Float
-    , slideAttributes : SlideAttributes
-    , fragmentAttributes : FragmentAttributes
+    , slideAnimator : SlideAnimation.Animator
+    , fragmentAnimator : FragmentAnimation.Animator
     , animationDuration : Time.Time
     , keyCodesToMessage : List { message : Message, keyCodes : List Int }
     }
@@ -122,121 +121,8 @@ type Message
 
 
 --
--- API types
---
-
-
-{-| This is used to tell the slideAttributes function whether it is running on
-    the slide that's coming into view or the one that's going away.
--}
-type SlideMotionDirection
-    = Incoming
-    | Outgoing
-
-
-{-|
- Usually during an animation there will be two visible slides:
- this tells you the relative position of the two slides within the normal
- slide sequence.
-
- If you navigate from one slide to the next, the Outgoing slide will be
- the slide with the SmallerIndex, and the Incoming slide will be the slide
- with the LargerIndex.
-
- If instead you navigate backwards, from one slide to the previous, it
- will be the opposite.
--}
-type SlideRelativeOrder
-    = SmallerIndex
-    | LargerIndex
-
-
-{-| Tells you what a visible slide is doing.
-    The `Float` used by the `Moving` constructor is for the animation completion that runs between 0 and 1,
-    0 when the animation hasn't yet started and 1 when it is completed.
--}
-type SlideAnimation
-    = Still
-    | Moving SlideMotionDirection SlideRelativeOrder Float
-
-
-{-| Shorthand for the function type used to animate the slides.
-The first argument describes the slide state: whether it is still or moving, and if the latter
-in which direction and how much movement.
-
-```
-slideAttributesOpacity : SlideAttributes
-slideAttributesOpacity slideAnimation =
-    let
-        opacity =
-            case slideAnimation of
-                Still -> 1
-                Moving direction order completion ->
-                    case direction of
-                        Incoming -> completion
-                        Outgoing -> 1 - completion
-    in
-        [ style
-            [ ("opacity", toString opacity) ]
-        ]
-```
--}
-type alias SlideAttributes =
-    SlideAnimation -> List (Html.Attribute Message)
-
-
-{-| Shorthand for the function type used to customise fragment animation.
-```
-fragmentAttributesOpacity : FragmentAttributes
-fragmentAttributesOpacity completion =
-    [ style
-        [ ("opacity", toString completion) ]
-    ]
-```
--}
-type alias FragmentAttributes =
-    Float -> List (Html.Attribute Message)
-
-
-
---
 -- Defaults
 --
-
-
-slideAttributesScroll : SlideAttributes
-slideAttributesScroll slideAnimation =
-    let
-        position =
-            case slideAnimation of
-                Still ->
-                    0
-
-                Moving direction order completion ->
-                    let
-                        offset =
-                            case order of
-                                SmallerIndex ->
-                                    0
-
-                                LargerIndex ->
-                                    100
-                    in
-                        offset - completion * 100
-    in
-        [ style
-            [ ( "position", "absolute" )
-            , ( "width", "100%" )
-            , ( "transform", "translate(" ++ toString position ++ "%)" )
-            ]
-        ]
-
-
-fragmentAttributesOpacity : FragmentAttributes
-fragmentAttributesOpacity completion =
-    [ style
-        [ ( "opacity", toString completion ) ]
-    ]
 
 
 {-| Default configuration options.
@@ -244,41 +130,6 @@ fragmentAttributesOpacity completion =
     so at least it is possible to `import Slides exposing (slidesDefaultOptions)` that does not pollute the scope.
 
     ```
-    { slidePixelSize =
-        { height = 700
-        , width = 960
-        }
-
-    , easingFunction =
-        Ease.inOutCubic
-
-    , animationDuration =
-        500 * Time.millisecond
-
-    , slideAttributes =
-        slideAttributesScroll
-
-    , fragmentAttributes =
-        fragmentAttributesOpacity
-
-    , keyCodesToMessage =
-        [   { message = First
-            , keyCodes = [36] -- Home
-            }
-        ,   { message = Last
-            , keyCodes = [35] -- End
-            }
-        ,   { message = Next
-            , keyCodes = [13, 32, 39, 76, 68] -- Enter, Spacebar, Arrow Right, l, d
-            }
-        ,   { message = Prev
-            , keyCodes = [37, 72, 65] -- Arrow Left, h, a
-            }
-        ,   { message = PauseAnimation
-            , keyCodes = [80]
-            }
-        ]
-    }
     ```
 -}
 slidesDefaultOptions : Options
@@ -291,10 +142,10 @@ slidesDefaultOptions =
         Ease.inOutCubic
     , animationDuration =
         500 * Time.millisecond
-    , slideAttributes =
-        slideAttributesScroll
-    , fragmentAttributes =
-        fragmentAttributesOpacity
+    , slideAnimator =
+        SlideAnimation.scroll
+    , fragmentAnimator =
+        FragmentAnimation.fade
     , keyCodesToMessage =
         [ { message = First
           , keyCodes =
@@ -629,9 +480,9 @@ init options slides location =
 --
 
 
-slideSection attributes fragments =
+slideSection styleAttributes fragments =
     section
-        attributes
+        [ style styleAttributes ]
         [ div
             [ class "slide-content" ]
             fragments
@@ -650,7 +501,7 @@ fragmentsByPosition options model index fragmentPosition =
             div
                 [ class "fragment-content" ]
                 [ div
-                    (options.fragmentAttributes <| completionByIndex index)
+                    [ style (options.fragmentAnimator <| completionByIndex index) ]
                     [ frag ]
                 ]
 
@@ -690,26 +541,26 @@ slideViewMotion options model =
         -- directions for the slide with the smaller index and the slide with the larger index
         ( smallerDirection, largerDirection ) =
             if distance > 0 then
-                ( Outgoing, Incoming )
+                ( SlideAnimation.Outgoing, SlideAnimation.Incoming )
             else
-                ( Incoming, Outgoing )
+                ( SlideAnimation.Incoming, SlideAnimation.Outgoing )
 
         completion =
             easing <| model.slideAnimation.currentPosition - toFloat smallerIndex
 
-        slideAttributes =
-            options.slideAttributes
+        slideAnimator =
+            options.slideAnimator
 
         fragByPos =
             fragmentsByPosition options model
     in
-        [ slideSection (slideAttributes <| Moving smallerDirection SmallerIndex completion) (fragByPos smallerIndex 9999)
-        , slideSection (slideAttributes <| Moving largerDirection LargerIndex completion) (fragByPos largerIndex 0)
+        [ slideSection (slideAnimator <| SlideAnimation.Moving smallerDirection SlideAnimation.SmallerIndex completion) (fragByPos smallerIndex 9999)
+        , slideSection (slideAnimator <| SlideAnimation.Moving largerDirection SlideAnimation.LargerIndex completion) (fragByPos largerIndex 0)
         ]
 
 
 slideViewStill options model =
-    [ slideSection (options.slideAttributes Still) <|
+    [ slideSection (options.slideAnimator SlideAnimation.Still) <|
         fragmentsByPosition options model model.slideAnimation.targetPosition model.fragmentAnimation.currentPosition
     ]
 
@@ -756,10 +607,6 @@ keyPressDispatcher keyCodeMap keyCode =
 
         _ ->
             Noop
-
-
-
---let x = Debug.log "keyCode" keyCode in Noop
 
 
 mouseClickDispatcher : Options -> Model -> Mouse.Position -> Message
