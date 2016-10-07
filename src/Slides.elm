@@ -1,22 +1,21 @@
-module Slides exposing
-    ( Message (..)
-    , Model
-    , program
-    , app
-
-    , Options
-    , slidesDefaultOptions
-    , SlideAttributes
-    , FragmentAttributes
-    , SlideAnimation (..)
-    , SlideMotionDirection (..)
-    , SlideRelativeOrder (..)
-
-    , md
-    , mdFragments
-    , html
-    , htmlFragments
-    )
+module Slides
+    exposing
+        ( Message(..)
+        , Model
+        , program
+        , app
+        , Options
+        , slidesDefaultOptions
+        , SlideAttributes
+        , FragmentAttributes
+        , SlideAnimation(..)
+        , SlideMotionDirection(..)
+        , SlideRelativeOrder(..)
+        , md
+        , mdFragments
+        , html
+        , htmlFragments
+        )
 
 {-|
 # Main API
@@ -28,7 +27,6 @@ module Slides exposing
 # Elm Architecture
 @docs Message, Model, program
 -}
-
 
 import AnimationFrame
 import Array exposing (Array)
@@ -48,10 +46,11 @@ import Time
 import Window
 
 
-
 --
 -- Model
 --
+
+
 {-|
 The Slides model.
 Contains all the state of the app, including the slides list itself, the current configuration options
@@ -59,12 +58,8 @@ and all the information needed for the slides and fragments animations.
 -}
 type alias Model =
     { slides : Array Slide
-    , options : Options
-
     , windowSize : Window.Size
-
     , isPaused : Bool
-
     , slideAnimation : SmoothAnimator.Model
     , fragmentAnimation : SmoothAnimator.Model
     }
@@ -93,7 +88,7 @@ Configuration options:
 -}
 type alias Options =
     { slidePixelSize : { height : Int, width : Int }
-    , easingFunction :  Float -> Float
+    , easingFunction : Float -> Float
     , slideAttributes : SlideAttributes
     , fragmentAttributes : FragmentAttributes
     , animationDuration : Time.Time
@@ -110,19 +105,18 @@ type alias Slide =
 --
 -- Messages
 --
+
+
 {-| The Elm-architecture Msgs.
 -}
 type Message
     = Noop
-
     | First
     | Last
     | Next
     | Prev
-
     | AnimationTick Time.Time
     | PauseAnimation
-
     | WindowResizes Window.Size
 
 
@@ -130,12 +124,15 @@ type Message
 --
 -- API types
 --
+
+
 {-| This is used to tell the slideAttributes function whether it is running on
     the slide that's coming into view or the one that's going away.
 -}
 type SlideMotionDirection
     = Incoming
     | Outgoing
+
 
 {-|
  Usually during an animation there will be two visible slides:
@@ -153,6 +150,7 @@ type SlideRelativeOrder
     = SmallerIndex
     | LargerIndex
 
+
 {-| Tells you what a visible slide is doing.
     The `Float` used by the `Moving` constructor is for the animation completion that runs between 0 and 1,
     0 when the animation hasn't yet started and 1 when it is completed.
@@ -160,6 +158,7 @@ type SlideRelativeOrder
 type SlideAnimation
     = Still
     | Moving SlideMotionDirection SlideRelativeOrder Float
+
 
 {-| Shorthand for the function type used to animate the slides.
 The first argument describes the slide state: whether it is still or moving, and if the latter
@@ -185,6 +184,7 @@ slideAttributesOpacity slideAnimation =
 type alias SlideAttributes =
     SlideAnimation -> List (Html.Attribute Message)
 
+
 {-| Shorthand for the function type used to customise fragment animation.
 ```
 fragmentAttributesOpacity : FragmentAttributes
@@ -202,24 +202,32 @@ type alias FragmentAttributes =
 --
 -- Defaults
 --
+
+
 slideAttributesScroll : SlideAttributes
 slideAttributesScroll slideAnimation =
     let
         position =
             case slideAnimation of
-                Still -> 0
+                Still ->
+                    0
+
                 Moving direction order completion ->
                     let
-                        offset = case order of
-                            SmallerIndex -> 0
-                            LargerIndex -> 100
+                        offset =
+                            case order of
+                                SmallerIndex ->
+                                    0
+
+                                LargerIndex ->
+                                    100
                     in
                         offset - completion * 100
     in
         [ style
-            [ ("position", "absolute")
-            , ("width", "100%")
-            , ("transform", "translate(" ++ toString position ++ "%)")
+            [ ( "position", "absolute" )
+            , ( "width", "100%" )
+            , ( "transform", "translate(" ++ toString position ++ "%)" )
             ]
         ]
 
@@ -227,7 +235,7 @@ slideAttributesScroll slideAnimation =
 fragmentAttributesOpacity : FragmentAttributes
 fragmentAttributesOpacity completion =
     [ style
-        [ ("opacity", toString completion) ]
+        [ ( "opacity", toString completion ) ]
     ]
 
 
@@ -279,35 +287,38 @@ slidesDefaultOptions =
         { height = 700
         , width = 960
         }
-
     , easingFunction =
         Ease.inOutCubic
-
     , animationDuration =
         500 * Time.millisecond
-
     , slideAttributes =
         slideAttributesScroll
-
     , fragmentAttributes =
         fragmentAttributesOpacity
-
     , keyCodesToMessage =
-        [   { message = First
-            , keyCodes = [36] -- Home
-            }
-        ,   { message = Last
-            , keyCodes = [35] -- End
-            }
-        ,   { message = Next
-            , keyCodes = [13, 32, 39, 76, 68] -- Enter, Spacebar, Arrow Right, l, d
-            }
-        ,   { message = Prev
-            , keyCodes = [37, 72, 65] -- Arrow Left, h, a
-            }
-        ,   { message = PauseAnimation
-            , keyCodes = [80]
-            }
+        [ { message = First
+          , keyCodes =
+                [ 36 ]
+                -- Home
+          }
+        , { message = Last
+          , keyCodes =
+                [ 35 ]
+                -- End
+          }
+        , { message = Next
+          , keyCodes =
+                [ 13, 32, 39, 76, 68 ]
+                -- Enter, Spacebar, Arrow Right, l, d
+          }
+        , { message = Prev
+          , keyCodes =
+                [ 37, 72, 65 ]
+                -- Arrow Left, h, a
+          }
+        , { message = PauseAnimation
+          , keyCodes = [ 80 ]
+          }
         ]
     }
 
@@ -316,6 +327,8 @@ slidesDefaultOptions =
 --
 -- API: Html slide constructor
 --
+
+
 {-|
 Creates a single slide from a DOM node.
 
@@ -333,7 +346,7 @@ slide1 = html <|
 -}
 html : Html Message -> Slide
 html htmlNode =
-    htmlFragments [htmlNode]
+    htmlFragments [ htmlNode ]
 
 
 {-|
@@ -355,6 +368,8 @@ htmlFragments htmlNodes =
 --
 -- API: Markdown slide constructor
 --
+
+
 {-|
 Creates a slide from a Markdown string.
 
@@ -373,7 +388,7 @@ slide3 = md
 -}
 md : String -> Slide
 md markdownContent =
-    mdFragments [markdownContent]
+    mdFragments [ markdownContent ]
 
 
 {-|
@@ -395,9 +410,9 @@ mdFragments markdownFragments =
 
         options =
             { markdownDefaultOptions
-            | githubFlavored = Just { tables = True, breaks = False }
-            , defaultHighlighting = Nothing
-            , smartypants = True
+                | githubFlavored = Just { tables = True, breaks = False }
+                , defaultHighlighting = Nothing
+                , smartypants = True
             }
 
         htmlNodes =
@@ -410,11 +425,13 @@ mdFragments markdownFragments =
 --
 -- Helpers
 --
-scale : Model -> Float
-scale model =
+
+
+scale : Options -> Model -> Float
+scale options model =
     min
-        (toFloat model.windowSize.width / toFloat model.options.slidePixelSize.width)
-        (toFloat model.windowSize.height / toFloat model.options.slidePixelSize.height)
+        (toFloat model.windowSize.width / toFloat options.slidePixelSize.width)
+        (toFloat model.windowSize.height / toFloat options.slidePixelSize.height)
 
 
 locationToSlideIndex : Navigation.Location -> Maybe Int
@@ -441,11 +458,13 @@ slideDistance model =
 --
 -- Update
 --
-slideAnimatorUpdate : Model -> SmoothAnimator.Message -> (Model, Cmd Message)
-slideAnimatorUpdate oldParentModel childMessage =
+
+
+slideAnimatorUpdate : Options -> Model -> SmoothAnimator.Message -> ( Model, Cmd Message )
+slideAnimatorUpdate options oldParentModel childMessage =
     let
         duration =
-            oldParentModel.options.animationDuration
+            options.animationDuration
 
         maximumPosition =
             Array.length oldParentModel.slides - 1
@@ -458,51 +477,52 @@ slideAnimatorUpdate oldParentModel childMessage =
 
         currentIndexInUrl =
             case childMessage of
-
                 -- user entered a new url manually, which may be out of bounds
-                SmoothAnimator.SelectExact indexFromUrl -> indexFromUrl
+                SmoothAnimator.SelectExact indexFromUrl ->
+                    indexFromUrl
 
                 -- url reflects old index
-                _ -> oldParentModel.slideAnimation.targetPosition
+                _ ->
+                    oldParentModel.slideAnimation.targetPosition
 
         cmd =
-            if newChildModel.targetPosition == currentIndexInUrl
-            then Cmd.none
-            else Navigation.newUrl <| modelToHashUrl newParentModel
+            if newChildModel.targetPosition == currentIndexInUrl then
+                Cmd.none
+            else
+                Navigation.newUrl <| modelToHashUrl newParentModel
     in
-        (newParentModel, cmd)
+        ( newParentModel, cmd )
 
 
-
-fragmentAnimatorUpdate : Int -> Model -> SmoothAnimator.Message -> (Model, Cmd Message)
-fragmentAnimatorUpdate maximumPosition oldParentModel message =
+fragmentAnimatorUpdate : Int -> Options -> Model -> SmoothAnimator.Message -> ( Model, Cmd Message )
+fragmentAnimatorUpdate maximumPosition options oldParentModel message =
     let
-        duration = oldParentModel.options.animationDuration
+        newChildModel =
+            SmoothAnimator.update options.animationDuration maximumPosition message oldParentModel.fragmentAnimation
 
-        newChildModel = SmoothAnimator.update duration maximumPosition message oldParentModel.fragmentAnimation
-        newParentModel = { oldParentModel | fragmentAnimation = newChildModel }
+        newParentModel =
+            { oldParentModel | fragmentAnimation = newChildModel }
     in
-        (newParentModel, Cmd.none)
-
+        ( newParentModel, Cmd.none )
 
 
 resetFragments : Float -> Model -> Model
 resetFragments distance oldModel =
     let
         newPosition =
-            if distance > 0
-            then 0
-            else List.length (slideByIndex oldModel oldModel.slideAnimation.targetPosition).fragments - 1
+            if distance > 0 then
+                0
+            else
+                List.length (slideByIndex oldModel oldModel.slideAnimation.targetPosition).fragments - 1
     in
         { oldModel | fragmentAnimation = SmoothAnimator.init newPosition }
 
 
-
-update : Message -> Model -> (Model, Cmd Message)
-update message oldModel =
+update : Options -> Message -> Model -> ( Model, Cmd Message )
+update options message oldModel =
     let
         noCmd m =
-            (m, Cmd.none)
+            ( m, Cmd.none )
 
         maximumPosition =
             List.length (slideByIndex oldModel oldModel.slideAnimation.targetPosition).fragments - 1
@@ -511,10 +531,10 @@ update message oldModel =
             slideDistance oldModel /= 0
 
         mixedUpdater isAboutToChangeSlides message =
-            if isAlreadyChangingSlides || isAboutToChangeSlides
-            then slideAnimatorUpdate oldModel message
-            else fragmentAnimatorUpdate maximumPosition oldModel message
-
+            if isAlreadyChangingSlides || isAboutToChangeSlides then
+                slideAnimatorUpdate options oldModel message
+            else
+                fragmentAnimatorUpdate maximumPosition options oldModel message
     in
         case message of
             Noop ->
@@ -539,52 +559,57 @@ update message oldModel =
                 noCmd { oldModel | isPaused = not oldModel.isPaused }
 
             AnimationTick deltaTime ->
-                if oldModel.isPaused
-                then noCmd oldModel
+                if oldModel.isPaused then
+                    noCmd oldModel
                 else
                     let
                         distance =
                             slideDistance oldModel
 
-                        (m, cmd) =
+                        ( m, cmd ) =
                             mixedUpdater False (SmoothAnimator.AnimationTick deltaTime)
 
                         newModel =
-                            (if distance /= 0 then resetFragments distance else identity) m
+                            (if distance /= 0 then
+                                resetFragments distance
+                             else
+                                identity
+                            )
+                                m
                     in
-                        (newModel, cmd)
+                        ( newModel, cmd )
 
 
-
-urlUpdate : Navigation.Location -> Model -> (Model, Cmd Message)
-urlUpdate location model =
+urlUpdate : Options -> Navigation.Location -> Model -> ( Model, Cmd Message )
+urlUpdate options location model =
     case locationToSlideIndex location of
         -- User entered an url we can't parse as index
         Nothing ->
-            (model, Navigation.modifyUrl <| modelToHashUrl model)
+            ( model, Navigation.modifyUrl <| modelToHashUrl model )
 
         Just index ->
-            slideAnimatorUpdate model <| SmoothAnimator.SelectExact index
+            slideAnimatorUpdate options model <| SmoothAnimator.SelectExact index
 
 
 
 --
 -- Init
 --
-init : Options -> List Slide -> Navigation.Location -> (Model, Cmd Message)
+
+
+init : Options -> List Slide -> Navigation.Location -> ( Model, Cmd Message )
 init options slides location =
     let
         model0 =
             { slides = Array.fromList slides
-            , options = options
             , windowSize = options.slidePixelSize
             , isPaused = False
             , slideAnimation = SmoothAnimator.init 0
             , fragmentAnimation = SmoothAnimator.init 0
             }
 
-        (model, urlCmd) =
-            urlUpdate location model0
+        ( model, urlCmd ) =
+            urlUpdate options location model0
 
         slidePosition0 =
             model.slideAnimation.targetPosition
@@ -595,13 +620,15 @@ init options slides location =
         cmdWindow =
             Task.perform (\_ -> Noop) WindowResizes Window.size
     in
-        ({ model | slideAnimation = slideAnimation }, Cmd.batch [cmdWindow, urlCmd])
+        ( { model | slideAnimation = slideAnimation }, Cmd.batch [ cmdWindow, urlCmd ] )
 
 
 
 --
 -- View
 --
+
+
 slideSection attributes fragments =
     section
         attributes
@@ -611,7 +638,7 @@ slideSection attributes fragments =
         ]
 
 
-fragmentsByPosition model index fragmentPosition =
+fragmentsByPosition options model index fragmentPosition =
     let
         slide =
             slideByIndex model index
@@ -623,159 +650,206 @@ fragmentsByPosition model index fragmentPosition =
             div
                 [ class "fragment-content" ]
                 [ div
-                    (model.options.fragmentAttributes <| completionByIndex index)
+                    (options.fragmentAttributes <| completionByIndex index)
                     [ frag ]
                 ]
 
         styledFragments =
             List.indexedMap styleFrag slide.fragments
-
     in
         styledFragments
 
 
-slideViewMotion model =
+slideViewMotion options model =
     let
         distance =
             slideDistance model
 
         easing =
-            if abs distance > 1 then identity
-            else if distance >= 0
-                then model.options.easingFunction
-                else Ease.flip model.options.easingFunction
+            if abs distance > 1 then
+                identity
+            else if distance >= 0 then
+                options.easingFunction
+            else
+                Ease.flip options.easingFunction
 
         smallerIndex =
             -- HACK: When Prev has *just* been called, currentPosition will be
             -- an integer and floor() will return it verbatim.
-            floor <| model.slideAnimation.currentPosition - (if distance > 0 then 0 else 0.000001)
+            floor <|
+                model.slideAnimation.currentPosition
+                    - (if distance > 0 then
+                        0
+                       else
+                        0.000001
+                      )
 
         largerIndex =
             smallerIndex + 1
 
         -- directions for the slide with the smaller index and the slide with the larger index
-        (smallerDirection, largerDirection) =
-            if distance > 0 then (Outgoing, Incoming) else (Incoming, Outgoing)
+        ( smallerDirection, largerDirection ) =
+            if distance > 0 then
+                ( Outgoing, Incoming )
+            else
+                ( Incoming, Outgoing )
 
         completion =
             easing <| model.slideAnimation.currentPosition - toFloat smallerIndex
 
         slideAttributes =
-            model.options.slideAttributes
+            options.slideAttributes
 
+        fragByPos =
+            fragmentsByPosition options model
     in
-        [ slideSection (slideAttributes <| Moving smallerDirection SmallerIndex completion) (fragmentsByPosition model smallerIndex 9999)
-        , slideSection (slideAttributes <| Moving largerDirection LargerIndex completion) (fragmentsByPosition model largerIndex 0)
+        [ slideSection (slideAttributes <| Moving smallerDirection SmallerIndex completion) (fragByPos smallerIndex 9999)
+        , slideSection (slideAttributes <| Moving largerDirection LargerIndex completion) (fragByPos largerIndex 0)
         ]
 
 
-slideViewStill model =
-    [   slideSection (model.options.slideAttributes Still)
-        <| fragmentsByPosition model model.slideAnimation.targetPosition model.fragmentAnimation.currentPosition
+slideViewStill options model =
+    [ slideSection (options.slideAttributes Still) <|
+        fragmentsByPosition options model model.slideAnimation.targetPosition model.fragmentAnimation.currentPosition
     ]
 
 
-
-view : Model -> Html Message
-view model =
-    div
-        [ class "slides"
-        , style
-            [ ("width", toString model.options.slidePixelSize.width ++ "px")
-            , ("height", toString model.options.slidePixelSize.height ++ "px")
-            , ("transform", "translate(-50%, -50%) scale(" ++ toString (scale model) ++ ")")
-
-            , ("left", "50%")
-            , ("top", "50%")
-            , ("bottom", "auto")
-            , ("right", "auto")
-            , ("position", "absolute")
-            , ("overflow", "hidden")
+view : Options -> Model -> Html Message
+view options model =
+    let
+        slideView =
+            if slideDistance model == 0 then
+                slideViewStill
+            else
+                slideViewMotion
+    in
+        div
+            [ class "slides"
+            , style
+                [ ( "width", toString options.slidePixelSize.width ++ "px" )
+                , ( "height", toString options.slidePixelSize.height ++ "px" )
+                , ( "transform", "translate(-50%, -50%) scale(" ++ toString (scale options model) ++ ")" )
+                , ( "left", "50%" )
+                , ( "top", "50%" )
+                , ( "bottom", "auto" )
+                , ( "right", "auto" )
+                , ( "position", "absolute" )
+                , ( "overflow", "hidden" )
+                ]
             ]
-        ]
-        <| (if slideDistance model == 0 then slideViewStill else slideViewMotion) model
+            (slideView options model)
+
 
 
 --
 -- Subscriptions
 --
+
+
 keyPressDispatcher keyCodeMap keyCode =
     case keyCodeMap of
-        x :: xs -> if List.member keyCode x.keyCodes then x.message else keyPressDispatcher xs keyCode
-        _ -> Noop --let x = Debug.log "keyCode" keyCode in Noop
+        x :: xs ->
+            if List.member keyCode x.keyCodes then
+                x.message
+            else
+                keyPressDispatcher xs keyCode
+
+        _ ->
+            Noop
 
 
-mouseClickDispatcher : Model -> Mouse.Position -> Message
-mouseClickDispatcher model position =
+
+--let x = Debug.log "keyCode" keyCode in Noop
+
+
+mouseClickDispatcher : Options -> Model -> Mouse.Position -> Message
+mouseClickDispatcher options model position =
     let
-        s = scale model
+        s =
+            scale options model
 
-        slide component = s * toFloat (component model.options.slidePixelSize)
+        slide component =
+            s * toFloat (component options.slidePixelSize)
 
-        window component = toFloat <| component model.windowSize
+        window component =
+            toFloat <| component model.windowSize
 
-        h = slide .height
-        w = slide .width
+        h =
+            slide .height
 
-        hh = window .height
-        ww = window .width
+        w =
+            slide .width
+
+        hh =
+            window .height
+
+        ww =
+            window .width
 
         {-
-            Equation of the straigh line that passes through the slide's bottom left corner and top right corner.
+           Equation of the straigh line that passes through the slide's bottom left corner and top right corner.
 
-            +------------>
-            |       /
-            |   +--/
-            |   | /|
-            |   |/ |
-            |   /--+
-            v  /
+           +------------>
+           |       /
+           |   +--/
+           |   | /|
+           |   |/ |
+           |   /--+
+           v  /
         -}
-        y x = ( -x/w + (ww-w)/(2*w) + (hh+h)/(2*h) ) * h
+        y x =
+            (-x / w + (ww - w) / (2 * w) + (hh + h) / (2 * h)) * h
 
-        isAbove = toFloat position.y < y (toFloat position.x)
+        isAbove =
+            toFloat position.y < y (toFloat position.x)
     in
-        if isAbove
-        then Prev
-        else Next
+        if isAbove then
+            Prev
+        else
+            Next
+
 
 
 -- TODO: Add support for touch/swipe
-subscriptions model =
+
+
+subscriptions options model =
     Sub.batch
-    -- TODO: switch to Keyboard.presses once https://github.com/elm-lang/keyboard/issues/3 is fixed
-    [ Keyboard.ups (keyPressDispatcher model.options.keyCodesToMessage)
-    , Mouse.clicks <| mouseClickDispatcher model
-    , Window.resizes WindowResizes
-    , AnimationFrame.diffs AnimationTick
-    ]
+        -- TODO: switch to Keyboard.presses once https://github.com/elm-lang/keyboard/issues/3 is fixed
+        [ Keyboard.ups (keyPressDispatcher options.keyCodesToMessage)
+        , Mouse.clicks <| mouseClickDispatcher options model
+        , Window.resizes WindowResizes
+        , AnimationFrame.diffs AnimationTick
+        ]
 
 
 
 --
 -- `main` helper
 --
+
+
 {-|
 This provides you with all the standard functions used in the Elm architecture (`init`, `update`, `view`, `subscriptions`)
 plus the one used for URL navigation (`urlUpdate`).
 
 This allows you to embed a Slides app inside another Elm app or, more importantly, to have full control of how the app behaves.
 -}
-program
-    : Options
+program :
+    Options
     -> List Slide
-    ->  { init : Navigation.Location -> (Model, Cmd Message)
-        , update : Message -> Model -> (Model, Cmd Message)
-        , urlUpdate : Navigation.Location -> Model -> (Model, Cmd Message)
-        , view : Model -> Html Message
-        , subscriptions : Model -> Sub Message
-        }
+    -> { init : Navigation.Location -> ( Model, Cmd Message )
+       , update : Message -> Model -> ( Model, Cmd Message )
+       , urlUpdate : Navigation.Location -> Model -> ( Model, Cmd Message )
+       , view : Model -> Html Message
+       , subscriptions : Model -> Sub Message
+       }
 program options slides =
     { init = init options slides
-    , update = update
-    , urlUpdate = urlUpdate
-    , view = view
-    , subscriptions = subscriptions
+    , update = update options
+    , urlUpdate = urlUpdate options
+    , view = view options
+    , subscriptions = subscriptions options
     }
 
 
@@ -793,4 +867,3 @@ main = app
 app : Options -> List Slide -> Program Never
 app options slides =
     Navigation.program (Navigation.makeParser identity) (program options slides)
-
