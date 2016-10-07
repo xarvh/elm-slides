@@ -36,6 +36,7 @@ import Markdown
 import Mouse
 import Navigation
 import Slides.SlideAnimation as SlideAnimation
+import Slides.Styles
 import SmoothAnimator
 import String
 import StringUnindent
@@ -66,6 +67,10 @@ type alias Model =
 {-|
 Configuration options:
 
+* `style` &mdash; A list of [elm-css](http://package.elm-lang.org/packages/rtfeldman/elm-css/latest) `Snippets` to apply.
+  Use [] if you want to use an external CSS.
+  The Slides.Style module contains some preset styles ready to use.
+
 * `slideAnimator` &mdash; The function used to customize the slide animation.
   The Slides.SlideAnimation module contains some preset animators and the information for writing custom ones.
 
@@ -83,7 +88,8 @@ Configuration options:
 * `keyCodesToMessage` &mdash; a map of all Messages and the key codes that can trigger them.
 -}
 type alias Options =
-    { slideAnimator : SlideAnimation.Animator
+    { style : List Css.Snippet
+    , slideAnimator : SlideAnimation.Animator
     , fragmentAnimator : FragmentAnimation.Animator
     , easingFunction : Float -> Float
     , animationDuration : Time.Time
@@ -129,7 +135,9 @@ type Message
 -}
 slidesDefaultOptions : Options
 slidesDefaultOptions =
-    { slideAnimator =
+    { style =
+        Slides.Styles.whiteOnBlack
+    , slideAnimator =
         SlideAnimation.scroll
     , fragmentAnimator =
         FragmentAnimation.fade
@@ -568,22 +576,35 @@ view options model =
                 slideViewStill
             else
                 slideViewMotion
+
+        css =
+            options.style
+                |> Css.stylesheet
+                |> flip (::) []
+                |> Css.compile
+                |> .css
     in
         div
-            [ class "slides"
-            , (Html.Attributes.style << Css.asPairs)
-                [ Css.width (px <| toFloat options.slidePixelSize.width)
-                , Css.height (px <| toFloat options.slidePixelSize.height)
-                , Css.transforms [ Css.translate2 (pct -50) (pct -50), Css.scale (scale options model) ]
-                , Css.left (pct 50)
-                , Css.top (pct 50)
-                , Css.bottom Css.auto
-                , Css.right Css.auto
-                , Css.position Css.absolute
-                , Css.overflow Css.hidden
+            []
+            [ Html.node "style"
+                []
+                [ Html.text css ]
+            , div
+                [ class "slides"
+                , (Html.Attributes.style << Css.asPairs)
+                    [ Css.width (px <| toFloat options.slidePixelSize.width)
+                    , Css.height (px <| toFloat options.slidePixelSize.height)
+                    , Css.transforms [ Css.translate2 (pct -50) (pct -50), Css.scale (scale options model) ]
+                    , Css.left (pct 50)
+                    , Css.top (pct 50)
+                    , Css.bottom Css.auto
+                    , Css.right Css.auto
+                    , Css.position Css.absolute
+                    , Css.overflow Css.hidden
+                    ]
                 ]
+                (slideView options model)
             ]
-            (slideView options model)
 
 
 
