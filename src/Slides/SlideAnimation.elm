@@ -1,4 +1,4 @@
-module SlideAnimation exposing (..)
+module Slides.SlideAnimation exposing (..)
 
 {-|
 
