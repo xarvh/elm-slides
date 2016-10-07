@@ -13,6 +13,8 @@ and the types to create your own function.
 
 -}
 
+import Css exposing (px, pct)
+
 
 {-| This is used to tell the slideAttributes function whether it is running on
     the slide that's coming into view or the one that's going away.
@@ -64,9 +66,8 @@ fade status =
                         Incoming -> completion
                         Outgoing -> 1 - completion
     in
-        [ style
-            [ ("opacity", toString opacity) ]
-        ]
+        Css.asPairs
+            [ Css.opacity (Css.num opacity) ]
 ```
 -}
 type alias Animator =
@@ -95,10 +96,11 @@ scroll status =
                     in
                         offset - completion * 100
     in
-        [ ( "position", "absolute" )
-        , ( "width", "100%" )
-        , ( "transform", "translate(" ++ toString position ++ "%)" )
-        ]
+        Css.asPairs
+            [ Css.position Css.absolute
+            , Css.width (pct 100)
+            , Css.transform <| Css.translate (pct position)
+            ]
 
 
 {-| Fade in
@@ -119,4 +121,5 @@ fade status =
                         Outgoing ->
                             1 - completion
     in
-        [ ( "opacity", toString opacity ) ]
+        Css.asPairs
+            [ Css.opacity (Css.num opacity) ]

@@ -12,6 +12,7 @@ of a new slide fragment (or the hiding of an old one, if going backwards).
 @docs fade
 -}
 
+import Css
 
 
 {-| Shorthand for the function type used to animate the fragments.
@@ -30,4 +31,5 @@ type alias Animator =
 -}
 fade : Animator
 fade completion =
-    [ ( "opacity", toString completion ) ]
+    Css.asPairs
+        [ Css.opacity (Css.num completion) ]

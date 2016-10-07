@@ -25,10 +25,11 @@ module Slides
 
 import AnimationFrame
 import Array exposing (Array)
+import Css exposing (px, pct)
 import Ease
 import FragmentAnimation
 import Html exposing (Html, div, section)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class)
 import Html.App as App
 import Keyboard
 import Markdown
@@ -482,7 +483,7 @@ init options slides location =
 
 slideSection styleAttributes fragments =
     section
-        [ style styleAttributes ]
+        [ Html.Attributes.style styleAttributes ]
         [ div
             [ class "slide-content" ]
             fragments
@@ -501,7 +502,7 @@ fragmentsByPosition options model index fragmentPosition =
             div
                 [ class "fragment-content" ]
                 [ div
-                    [ style (options.fragmentAnimator <| completionByIndex index) ]
+                    [ Html.Attributes.style (options.fragmentAnimator <| completionByIndex index) ]
                     [ frag ]
                 ]
 
@@ -576,16 +577,16 @@ view options model =
     in
         div
             [ class "slides"
-            , style
-                [ ( "width", toString options.slidePixelSize.width ++ "px" )
-                , ( "height", toString options.slidePixelSize.height ++ "px" )
-                , ( "transform", "translate(-50%, -50%) scale(" ++ toString (scale options model) ++ ")" )
-                , ( "left", "50%" )
-                , ( "top", "50%" )
-                , ( "bottom", "auto" )
-                , ( "right", "auto" )
-                , ( "position", "absolute" )
-                , ( "overflow", "hidden" )
+            , (Html.Attributes.style << Css.asPairs)
+                [ Css.width (px <| toFloat options.slidePixelSize.width)
+                , Css.height (px <| toFloat options.slidePixelSize.height)
+                , Css.transforms [Css.translate2 (pct -50) (pct -50), Css.scale(scale options model)]
+                , Css.left (pct 50)
+                , Css.top (pct 50)
+                , Css.bottom Css.auto
+                , Css.right Css.auto
+                , Css.position Css.absolute
+                , Css.overflow Css.hidden
                 ]
             ]
             (slideView options model)
