@@ -44,8 +44,6 @@ import Time
 import Window
 
 
-
-
 --
 -- Model
 --
@@ -68,30 +66,28 @@ type alias Model =
 {-|
 Configuration options:
 
-* `slidePixelSize` &mdash; `width` and `height` geometry of the slide area, in pixel.
-   While the slide will be scaled to the window size, the internal coordinates of the slide will refer to these values.
+* `slideAnimator` &mdash; The function used to customize the slide animation.
+  The Slides.SlideAnimation module contains some preset animators and the information for writing custom ones.
+
+* `fragmentAnimator` &mdash; the function used to animate a fragment within a slide.
+  The Slides.FragmentAnimation module contains some preset animators and the information for writing custom ones.
 
 * `easingFunction` &mdash; Any f : [0, 1] -> [0, 1]
   The standard ones are available in Elm's [easing-functions](http://package.elm-lang.org/packages/elm-community/easing-functions/1.0.1/).
 
-* `slideAnimator` &mdash; The function used to customize the slide animation.
-  It takes the slide state and motion as argument, and produces a list of DOM attributes (usually just the `style`
-  attribute, but you can add `class` or anything else you need) that can be used to animate the slides.
-
-* `fragmentAnimator` &mdash; the function used to animate a fragment within a slide.
-  It takes the fragment completion from 0 to 1 (0 being invisible and 1 being fully visible) and produces a list of Dom attributes
-  (as above, usually just the `style` attribute will suffice).
-
 * `animationDuration` &mdash; the `Time` duration of a slide or fragment animation.
+
+* `slidePixelSize` &mdash; `width` and `height` geometry of the slide area, in pixel.
+   While the slide will be scaled to the window size, the internal coordinates of the slide will refer to these values.
 
 * `keyCodesToMessage` &mdash; a map of all Messages and the key codes that can trigger them.
 -}
 type alias Options =
-    { slidePixelSize : { height : Int, width : Int }
-    , easingFunction : Float -> Float
-    , slideAnimator : SlideAnimation.Animator
+    { slideAnimator : SlideAnimation.Animator
     , fragmentAnimator : FragmentAnimation.Animator
+    , easingFunction : Float -> Float
     , animationDuration : Time.Time
+    , slidePixelSize : { height : Int, width : Int }
     , keyCodesToMessage : List { message : Message, keyCodes : List Int }
     }
 
@@ -127,26 +123,24 @@ type Message
 
 
 {-| Default configuration options.
-    It is named `slidesDefaultOptions` instead than just `defaultOptions` because you can't use `{ Slides.defaultOptions | whatever... }`
-    so at least it is possible to `import Slides exposing (slidesDefaultOptions)` that does not pollute the scope.
 
     ```
     ```
 -}
 slidesDefaultOptions : Options
 slidesDefaultOptions =
-    { slidePixelSize =
-        { height = 700
-        , width = 960
-        }
+    { slideAnimator =
+        SlideAnimation.scroll
+    , fragmentAnimator =
+        FragmentAnimation.fade
     , easingFunction =
         Ease.inOutCubic
     , animationDuration =
         500 * Time.millisecond
-    , slideAnimator =
-        SlideAnimation.scroll
-    , fragmentAnimator =
-        FragmentAnimation.fade
+    , slidePixelSize =
+        { height = 700
+        , width = 960
+        }
     , keyCodesToMessage =
         [ { message = First
           , keyCodes =
@@ -580,7 +574,7 @@ view options model =
             , (Html.Attributes.style << Css.asPairs)
                 [ Css.width (px <| toFloat options.slidePixelSize.width)
                 , Css.height (px <| toFloat options.slidePixelSize.height)
-                , Css.transforms [Css.translate2 (pct -50) (pct -50), Css.scale(scale options model)]
+                , Css.transforms [ Css.translate2 (pct -50) (pct -50), Css.scale (scale options model) ]
                 , Css.left (pct 50)
                 , Css.top (pct 50)
                 , Css.bottom Css.auto
