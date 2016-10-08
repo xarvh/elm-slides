@@ -22,10 +22,10 @@ whiteOnBlack =
         , fontFamilies [ "Palatino Linotype" ]
         , textAlign center
         , fontSize (px 38)
-          --             , fontWeight normal
+        , fontWeight (num 400)
         ]
     , h1
-        [--         font-weight: normal;
+        [ fontWeight (num 400)
         ]
     , section
         [ height (px 700)
