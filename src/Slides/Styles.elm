@@ -29,10 +29,10 @@ whiteOnBlack =
         ]
     , section
         [ height (px 700)
-          --         , backgroundPosition center
-          --         , backgroundSize cover
+        , property "background-position" "center"
+        , property "background-size" "cover"
         , displayFlex
-          --         , justifyContent center
+        , property "justify-content" "center"
         , alignItems center
         ]
     , (.) "slide-content"
