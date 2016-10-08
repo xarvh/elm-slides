@@ -611,8 +611,8 @@ slideViewMotion options model =
         fragByPos =
             fragmentsByPosition options model
     in
-        [ slideSection (slideAnimator <| SlideAnimation.Moving smallerDirection SlideAnimation.SmallerIndex completion) (fragByPos smallerIndex 9999)
-        , slideSection (slideAnimator <| SlideAnimation.Moving largerDirection SlideAnimation.LargerIndex completion) (fragByPos largerIndex 0)
+        [ slideSection (slideAnimator <| SlideAnimation.Moving smallerDirection SlideAnimation.EarlierSlide completion) (fragByPos smallerIndex 9999)
+        , slideSection (slideAnimator <| SlideAnimation.Moving largerDirection SlideAnimation.LaterSlide completion) (fragByPos largerIndex 0)
         ]
 
 

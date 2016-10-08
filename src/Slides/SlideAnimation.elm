@@ -30,15 +30,14 @@ type MotionDirection
  slide sequence.
 
  If you navigate from one slide to the next, the Outgoing slide will be
- the slide with the SmallerIndex, and the Incoming slide will be the slide
- with the LargerIndex.
+ the EarlierSlide, and the Incoming slide will be the LaterSlide.
 
  If instead you navigate backwards, from one slide to the previous, it
  will be the opposite.
 -}
 type RelativeOrder
-    = SmallerIndex
-    | LargerIndex
+    = EarlierSlide
+    | LaterSlide
 
 
 {-| Tells you what a visible slide is doing.
@@ -88,10 +87,10 @@ scroll status =
                     let
                         offset =
                             case order of
-                                SmallerIndex ->
+                                EarlierSlide ->
                                     0
 
-                                LargerIndex ->
+                                LaterSlide ->
                                     100
                     in
                         offset - completion * 100
