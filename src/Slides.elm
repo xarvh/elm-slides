@@ -1,26 +1,33 @@
 module Slides
     exposing
-        ( Message(..)
-        , Model
-        , program
-        , app
+        ( app
         , Options
         , slidesDefaultOptions
         , md
         , mdFragments
         , html
         , htmlFragments
+          -- TEA
+        , Msg(..)
+        , Model
+        , slideIndexParser
+        , init
+        , update
+        , urlUpdate
+        , view
+        , subscriptions
         )
 
 {-|
 # Main API
-@docs app, html, htmlFragments, md, mdFragments
+@docs app, md, mdFragments, html, htmlFragments
 
 # Options
 @docs Options, slidesDefaultOptions
 
 # Elm Architecture
-@docs Message, Model, program
+Normally used with [Navigation.program](http://package.elm-lang.org/packages/elm-lang/navigation/1.0.0/Navigation#program)
+@docs Msg, Model, slideIndexParser, init, update, urlUpdate, view, subscriptions
 -}
 
 import AnimationFrame
@@ -50,11 +57,7 @@ import Window
 --
 
 
-{-|
-The Slides model.
-Contains all the state of the app, including the slides list itself, the current configuration options
-and all the information needed for the slides and fragments animations.
--}
+{-| -}
 type alias Model =
     { slides : Array Slide
     , windowSize : Window.Size
@@ -69,13 +72,13 @@ Configuration options:
 
 * `style` &mdash; A list of [elm-css](http://package.elm-lang.org/packages/rtfeldman/elm-css/latest) `Snippets` to apply.
   Use [] if you want to use an external CSS.
-  The Slides.Style module contains some preset styles ready to use.
+  The `Slides.Style` module contains some preset styles ready to use.
 
 * `slideAnimator` &mdash; The function used to customize the slide animation.
-  The Slides.SlideAnimation module contains some preset animators and the information for writing custom ones.
+  The `Slides.SlideAnimation` module contains some preset animators and the information for writing custom ones.
 
 * `fragmentAnimator` &mdash; the function used to animate a fragment within a slide.
-  The Slides.FragmentAnimation module contains some preset animators and the information for writing custom ones.
+  The `Slides.FragmentAnimation` module contains some preset animators and the information for writing custom ones.
 
 * `easingFunction` &mdash; Any f : [0, 1] -> [0, 1]
   The standard ones are available in Elm's [easing-functions](http://package.elm-lang.org/packages/elm-community/easing-functions/1.0.1/).
@@ -85,7 +88,7 @@ Configuration options:
 * `slidePixelSize` &mdash; `width` and `height` geometry of the slide area, in pixel.
    While the slide will be scaled to the window size, the internal coordinates of the slide will refer to these values.
 
-* `keyCodesToMessage` &mdash; a map of all Messages and the key codes that can trigger them.
+* `keyCodesToMsg` &mdash; a map of all Msg and the key codes that can trigger them.
 -}
 type alias Options =
     { style : List Css.Snippet
@@ -94,24 +97,23 @@ type alias Options =
     , easingFunction : Float -> Float
     , animationDuration : Time.Time
     , slidePixelSize : { height : Int, width : Int }
-    , keyCodesToMessage : List { message : Message, keyCodes : List Int }
+    , keyCodesToMsg : List { msg : Msg, keyCodes : List Int }
     }
 
 
 type alias Slide =
-    { fragments : List (Html Message)
+    { fragments : List (Html Msg)
     }
 
 
 
 --
--- Messages
+-- Msg
 --
 
 
-{-| The Elm-architecture Msgs.
--}
-type Message
+{-| -}
+type Msg
     = Noop
     | First
     | Last
@@ -128,10 +130,53 @@ type Message
 --
 
 
-{-| Default configuration options.
+{-|
 
-    ```
-    ```
+Default configuration options.
+
+```
+slidesDefaultOptions =
+    { style =
+        Slides.Styles.whiteOnBlack
+    , slideAnimator =
+        SlideAnimation.scroll
+    , fragmentAnimator =
+        FragmentAnimation.fade
+    , easingFunction =
+        Ease.inOutCubic
+    , animationDuration =
+        500 * Time.millisecond
+    , slidePixelSize =
+        { height = 700
+        , width = 960
+        }
+    , keyCodesToMsg =
+        [ { msg = First
+          , keyCodes =
+                [ 36 ]
+                -- Home
+          }
+        , { msg = Last
+          , keyCodes =
+                [ 35 ]
+                -- End
+          }
+        , { msg = Next
+          , keyCodes =
+                [ 13, 32, 39, 76, 68 ]
+                -- Enter, Spacebar, Arrow Right, l, d
+          }
+        , { msg = Prev
+          , keyCodes =
+                [ 37, 72, 65 ]
+                -- Arrow Left, h, a
+          }
+        , { msg = PauseAnimation
+          , keyCodes = [ 80 ]
+          }
+        ]
+    }
+```
 -}
 slidesDefaultOptions : Options
 slidesDefaultOptions =
@@ -149,28 +194,28 @@ slidesDefaultOptions =
         { height = 700
         , width = 960
         }
-    , keyCodesToMessage =
-        [ { message = First
+    , keyCodesToMsg =
+        [ { msg = First
           , keyCodes =
                 [ 36 ]
                 -- Home
           }
-        , { message = Last
+        , { msg = Last
           , keyCodes =
                 [ 35 ]
                 -- End
           }
-        , { message = Next
+        , { msg = Next
           , keyCodes =
                 [ 13, 32, 39, 76, 68 ]
                 -- Enter, Spacebar, Arrow Right, l, d
           }
-        , { message = Prev
+        , { msg = Prev
           , keyCodes =
                 [ 37, 72, 65 ]
                 -- Arrow Left, h, a
           }
-        , { message = PauseAnimation
+        , { msg = PauseAnimation
           , keyCodes = [ 80 ]
           }
         ]
@@ -190,7 +235,7 @@ Can be used to create custom slides constructors (yes, it is used internally by 
 ```
 import Html exposing (..)
 
-slide1 = html <|
+slide1 = Slides.html <|
      div
         []
         [ h1 [] [ text "Hello, I am the slide header" ]
@@ -198,7 +243,7 @@ slide1 = html <|
         ]
 ```
 -}
-html : Html Message -> Slide
+html : Html Msg -> Slide
 html htmlNode =
     htmlFragments [ htmlNode ]
 
@@ -206,14 +251,14 @@ html htmlNode =
 {-|
 Creates a single slide made by several fragments, which are displayed in sequence, one after the other.
 ```
-slide2 = htmlFragments
+slide2 = Slides.htmlFragments
     [ div [] [ text "I am always visible when the slide is visible" ]
     , div [] [ text "Then I appear"
     , div [] [ text "and then I appear!"
     ]
 ```
 -}
-htmlFragments : List (Html Message) -> Slide
+htmlFragments : List (Html Msg) -> Slide
 htmlFragments htmlNodes =
     { fragments = htmlNodes }
 
@@ -233,7 +278,7 @@ so you can enable syntax highlightning by including [highlight.js](https://highl
 It automatically removes indentation from multi-line strings.
 
 ```
-slide3 = md
+slide3 = Slides.md
     """
     # Hello! I am a header
     *and I am emph!*
@@ -249,7 +294,7 @@ md markdownContent =
 Turns several Markdown strings into a single slide made by several fragments,
 which will appear one after another:
 ```
-slide4 = mdFragments
+slide4 = Slides.mdFragments
     [ "I am always visible"
     , "Then I appear"
     , "and Then I"
@@ -293,6 +338,12 @@ locationToSlideIndex location =
     String.dropLeft 1 location.hash |> String.toInt |> Result.toMaybe
 
 
+{-| -}
+slideIndexParser : Navigation.Parser (Maybe Int)
+slideIndexParser =
+    Navigation.makeParser locationToSlideIndex
+
+
 modelToHashUrl : Model -> String
 modelToHashUrl model =
     "#" ++ toString model.slideAnimation.targetPosition
@@ -314,8 +365,8 @@ slideDistance model =
 --
 
 
-slideAnimatorUpdate : Options -> Model -> SmoothAnimator.Message -> ( Model, Cmd Message )
-slideAnimatorUpdate options oldParentModel childMessage =
+slideAnimatorUpdate : Options -> Model -> SmoothAnimator.Msg -> ( Model, Cmd Msg )
+slideAnimatorUpdate options oldParentModel childMsg =
     let
         duration =
             options.animationDuration
@@ -324,13 +375,13 @@ slideAnimatorUpdate options oldParentModel childMessage =
             Array.length oldParentModel.slides - 1
 
         newChildModel =
-            SmoothAnimator.update duration maximumPosition childMessage oldParentModel.slideAnimation
+            SmoothAnimator.update duration maximumPosition childMsg oldParentModel.slideAnimation
 
         newParentModel =
             { oldParentModel | slideAnimation = newChildModel }
 
         currentIndexInUrl =
-            case childMessage of
+            case childMsg of
                 -- user entered a new url manually, which may be out of bounds
                 SmoothAnimator.SelectExact indexFromUrl ->
                     indexFromUrl
@@ -348,11 +399,11 @@ slideAnimatorUpdate options oldParentModel childMessage =
         ( newParentModel, cmd )
 
 
-fragmentAnimatorUpdate : Int -> Options -> Model -> SmoothAnimator.Message -> ( Model, Cmd Message )
-fragmentAnimatorUpdate maximumPosition options oldParentModel message =
+fragmentAnimatorUpdate : Int -> Options -> Model -> SmoothAnimator.Msg -> ( Model, Cmd Msg )
+fragmentAnimatorUpdate maximumPosition options oldParentModel msg =
     let
         newChildModel =
-            SmoothAnimator.update options.animationDuration maximumPosition message oldParentModel.fragmentAnimation
+            SmoothAnimator.update options.animationDuration maximumPosition msg oldParentModel.fragmentAnimation
 
         newParentModel =
             { oldParentModel | fragmentAnimation = newChildModel }
@@ -372,8 +423,9 @@ resetFragments distance oldModel =
         { oldModel | fragmentAnimation = SmoothAnimator.init newPosition }
 
 
-update : Options -> Message -> Model -> ( Model, Cmd Message )
-update options message oldModel =
+{-| -}
+update : Options -> Msg -> Model -> ( Model, Cmd Msg )
+update options msg oldModel =
     let
         noCmd m =
             ( m, Cmd.none )
@@ -384,13 +436,13 @@ update options message oldModel =
         isAlreadyChangingSlides =
             slideDistance oldModel /= 0
 
-        mixedUpdater isAboutToChangeSlides message =
+        mixedUpdater isAboutToChangeSlides msg =
             if isAlreadyChangingSlides || isAboutToChangeSlides then
-                slideAnimatorUpdate options oldModel message
+                slideAnimatorUpdate options oldModel msg
             else
-                fragmentAnimatorUpdate maximumPosition options oldModel message
+                fragmentAnimatorUpdate maximumPosition options oldModel msg
     in
-        case message of
+        case msg of
             Noop ->
                 noCmd oldModel
 
@@ -434,9 +486,10 @@ update options message oldModel =
                         ( newModel, cmd )
 
 
-urlUpdate : Options -> Navigation.Location -> Model -> ( Model, Cmd Message )
-urlUpdate options location model =
-    case locationToSlideIndex location of
+{-| -}
+urlUpdate : Options -> Maybe Int -> Model -> ( Model, Cmd Msg )
+urlUpdate options maybeSlideIndex model =
+    case maybeSlideIndex of
         -- User entered an url we can't parse as index
         Nothing ->
             ( model, Navigation.modifyUrl <| modelToHashUrl model )
@@ -451,8 +504,9 @@ urlUpdate options location model =
 --
 
 
-init : Options -> List Slide -> Navigation.Location -> ( Model, Cmd Message )
-init options slides location =
+{-| -}
+init : Options -> List Slide -> Maybe Int -> ( Model, Cmd Msg )
+init options slides maybeSlideIndex =
     let
         model0 =
             { slides = Array.fromList slides
@@ -463,7 +517,7 @@ init options slides location =
             }
 
         ( model, urlCmd ) =
-            urlUpdate options location model0
+            urlUpdate options maybeSlideIndex model0
 
         slidePosition0 =
             model.slideAnimation.targetPosition
@@ -568,7 +622,8 @@ slideViewStill options model =
     ]
 
 
-view : Options -> Model -> Html Message
+{-| -}
+view : Options -> Model -> Html Msg
 view options model =
     let
         slideView =
@@ -617,7 +672,7 @@ keyPressDispatcher keyCodeMap keyCode =
     case keyCodeMap of
         x :: xs ->
             if List.member keyCode x.keyCodes then
-                x.message
+                x.msg
             else
                 keyPressDispatcher xs keyCode
 
@@ -625,7 +680,7 @@ keyPressDispatcher keyCodeMap keyCode =
             Noop
 
 
-mouseClickDispatcher : Options -> Model -> Mouse.Position -> Message
+mouseClickDispatcher : Options -> Model -> Mouse.Position -> Msg
 mouseClickDispatcher options model position =
     let
         s =
@@ -676,10 +731,12 @@ mouseClickDispatcher options model position =
 -- TODO: Add support for touch/swipe
 
 
+{-| -}
+subscriptions : Options -> Model -> Sub Msg
 subscriptions options model =
     Sub.batch
         -- TODO: switch to Keyboard.presses once https://github.com/elm-lang/keyboard/issues/3 is fixed
-        [ Keyboard.ups (keyPressDispatcher options.keyCodesToMessage)
+        [ Keyboard.ups (keyPressDispatcher options.keyCodesToMsg)
         , Mouse.clicks <| mouseClickDispatcher options model
         , Window.resizes WindowResizes
         , AnimationFrame.diffs AnimationTick
@@ -693,34 +750,10 @@ subscriptions options model =
 
 
 {-|
-This provides you with all the standard functions used in the Elm architecture (`init`, `update`, `view`, `subscriptions`)
-plus the one used for URL navigation (`urlUpdate`).
-
-This allows you to embed a Slides app inside another Elm app or, more importantly, to have full control of how the app behaves.
--}
-program :
-    Options
-    -> List Slide
-    -> { init : Navigation.Location -> ( Model, Cmd Message )
-       , update : Message -> Model -> ( Model, Cmd Message )
-       , urlUpdate : Navigation.Location -> Model -> ( Model, Cmd Message )
-       , view : Model -> Html Message
-       , subscriptions : Model -> Sub Message
-       }
-program options slides =
-    { init = init options slides
-    , update = update options
-    , urlUpdate = urlUpdate options
-    , view = view options
-    , subscriptions = subscriptions options
-    }
-
-
-{-|
 Does all the wiring for you, returning a `Program` ready to run.
 ```
-main = app
-    slidesDefaultOptions
+main = Slides.app
+    Slides.slidesDefaultOptions
     [ slide1
     , slide2
     , ...
@@ -729,4 +762,11 @@ main = app
 -}
 app : Options -> List Slide -> Program Never
 app options slides =
-    Navigation.program (Navigation.makeParser identity) (program options slides)
+    Navigation.program
+        slideIndexParser
+        { init = init options slides
+        , update = update options
+        , urlUpdate = urlUpdate options
+        , view = view options
+        , subscriptions = subscriptions options
+        }

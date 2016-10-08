@@ -6,10 +6,10 @@ This module contains the functions used to animate the appearance
 of a new slide fragment (or the hiding of an old one, if going backwards).
 
 # Fragment animators
-@docs Animator
+@docs fade
 
 # Shorthand type
-@docs fade
+@docs Animator
 -}
 
 import Css
