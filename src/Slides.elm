@@ -10,10 +10,8 @@ module Slides
           -- TEA
         , Msg(..)
         , Model
-        , slideIndexParser
         , init
         , update
-        , urlUpdate
         , view
         , subscriptions
         )
@@ -27,7 +25,7 @@ module Slides
 
 # Elm Architecture
 Normally used with [Navigation.program](http://package.elm-lang.org/packages/elm-lang/navigation/1.0.0/Navigation#program)
-@docs Msg, Model, slideIndexParser, init, update, urlUpdate, view, subscriptions
+@docs Msg, Model, init, update, view, subscriptions
 -}
 
 import AnimationFrame
@@ -37,7 +35,6 @@ import Ease
 import Slides.FragmentAnimation as FragmentAnimation
 import Html exposing (Html, div, section)
 import Html.Attributes exposing (class)
-import Html.App as App
 import Keyboard
 import Markdown
 import Mouse
@@ -122,6 +119,7 @@ type Msg
     | AnimationTick Time.Time
     | PauseAnimation
     | WindowResizes Window.Size
+    | NewLocation Navigation.Location
 
 
 
@@ -338,12 +336,6 @@ locationToSlideIndex location =
     String.dropLeft 1 location.hash |> String.toInt |> Result.toMaybe
 
 
-{-| -}
-slideIndexParser : Navigation.Parser (Maybe Int)
-slideIndexParser =
-    Navigation.makeParser locationToSlideIndex
-
-
 modelToHashUrl : Model -> String
 modelToHashUrl model =
     "#" ++ toString model.slideAnimation.targetPosition
@@ -485,18 +477,14 @@ update options msg oldModel =
                     in
                         ( newModel, cmd )
 
+            NewLocation location ->
+                case locationToSlideIndex location of
+                    -- User entered an url we can't parse as index
+                    Nothing ->
+                        ( oldModel, Navigation.modifyUrl <| modelToHashUrl oldModel )
 
-{-| -}
-urlUpdate : Options -> Maybe Int -> Model -> ( Model, Cmd Msg )
-urlUpdate options maybeSlideIndex model =
-    case maybeSlideIndex of
-        -- User entered an url we can't parse as index
-        Nothing ->
-            ( model, Navigation.modifyUrl <| modelToHashUrl model )
-
-        Just index ->
-            slideAnimatorUpdate options model <| SmoothAnimator.SelectExact index
-
+                    Just index ->
+                        slideAnimatorUpdate options oldModel <| SmoothAnimator.SelectExact index
 
 
 --
@@ -505,8 +493,8 @@ urlUpdate options maybeSlideIndex model =
 
 
 {-| -}
-init : Options -> List Slide -> Maybe Int -> ( Model, Cmd Msg )
-init options slides maybeSlideIndex =
+init : Options -> List Slide -> Navigation.Location -> ( Model, Cmd Msg )
+init options slides location =
     let
         model0 =
             { slides = Array.fromList slides
@@ -517,7 +505,7 @@ init options slides maybeSlideIndex =
             }
 
         ( model, urlCmd ) =
-            urlUpdate options maybeSlideIndex model0
+            update options (NewLocation location) model0
 
         slidePosition0 =
             model.slideAnimation.targetPosition
@@ -526,7 +514,7 @@ init options slides maybeSlideIndex =
             SmoothAnimator.init slidePosition0
 
         cmdWindow =
-            Task.perform (\_ -> Noop) WindowResizes Window.size
+            Task.perform WindowResizes Window.size
     in
         ( { model | slideAnimation = slideAnimation }, Cmd.batch [ cmdWindow, urlCmd ] )
 
@@ -760,13 +748,12 @@ main = Slides.app
     ]
 ```
 -}
-app : Options -> List Slide -> Program Never
+app : Options -> List Slide -> Program Never Model Msg
 app options slides =
     Navigation.program
-        slideIndexParser
+        NewLocation
         { init = init options slides
         , update = update options
-        , urlUpdate = urlUpdate options
         , view = view options
         , subscriptions = subscriptions options
         }

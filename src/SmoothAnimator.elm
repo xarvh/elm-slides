@@ -36,7 +36,7 @@ newPosition duration m deltaTime =
         absDistance =
             abs distance
 
-        ( direction, limitTo ) =
+        ( direction, limitBetween ) =
             if distance > 0 then
                 ( 1, min )
             else
@@ -52,7 +52,7 @@ newPosition duration m deltaTime =
             m.currentPosition + deltaPosition
     in
         -- either min or max, depending on the direction we're going
-        newUnclampedPosition `limitTo` toFloat m.targetPosition
+        limitBetween newUnclampedPosition (toFloat m.targetPosition)
 
 
 update : Time.Time -> Int -> Msg -> Model -> Model
