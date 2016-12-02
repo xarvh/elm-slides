@@ -135,7 +135,7 @@ Default configuration options.
 ```
 slidesDefaultOptions =
     { style =
-        Slides.Styles.whiteOnBlack
+        Slides.Styles.blackOnWhite
     , slideAnimator =
         SlideAnimation.scroll
     , fragmentAnimator =
@@ -179,7 +179,7 @@ slidesDefaultOptions =
 slidesDefaultOptions : Options
 slidesDefaultOptions =
     { style =
-        Slides.Styles.whiteOnBlack
+        Slides.Styles.blackOnWhite
     , slideAnimator =
         SlideAnimation.scroll
     , fragmentAnimator =
