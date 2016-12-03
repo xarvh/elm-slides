@@ -135,9 +135,9 @@ Default configuration options.
 ```
 slidesDefaultOptions =
     { style =
-        Slides.Styles.blackOnWhite
+        Slides.Styles.elmBlueOnWhite
     , slideAnimator =
-        SlideAnimation.scroll
+        SlideAnimation.verticalDeck
     , fragmentAnimator =
         FragmentAnimation.fade
     , easingFunction =
@@ -179,9 +179,9 @@ slidesDefaultOptions =
 slidesDefaultOptions : Options
 slidesDefaultOptions =
     { style =
-        Slides.Styles.blackOnWhite
+        Slides.Styles.elmBlueOnWhite
     , slideAnimator =
-        SlideAnimation.scroll
+        SlideAnimation.verticalDeck
     , fragmentAnimator =
         FragmentAnimation.fade
     , easingFunction =

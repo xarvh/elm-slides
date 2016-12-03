@@ -6,7 +6,7 @@ This module contains the functions used to animate the change from one slide to 
 and the types to create your own function.
 
 # Slide animators
-@docs scroll, fade
+@docs scroll, fade, verticalDeck
 
 # Types
 @docs Animator, Status, MotionDirection, RelativeOrder
@@ -122,3 +122,33 @@ fade status =
     in
         Css.asPairs
             [ Css.opacity (Css.num opacity) ]
+
+
+{-| Vertical deck
+-}
+verticalDeck : Animator
+verticalDeck status =
+    let
+        blur completion =
+            "blur(" ++ (toString <| Basics.round <| (1 - completion) * 20) ++ "px)"
+    in
+        Css.asPairs <|
+            case status of
+                Still ->
+                    [ Css.position Css.absolute
+                    ]
+
+                Moving direction order completion ->
+                    case order of
+                        LaterSlide ->
+                            [ Css.position Css.absolute
+                            , Css.property "z-index" "1"
+                            , Css.property "filter" (blur completion)
+                            , Css.property "-webkit-filter" (blur completion)
+                            ]
+
+                        EarlierSlide ->
+                            [ Css.position Css.absolute
+                            , Css.transform <| Css.translate2 Css.zero (pct (completion * 100))
+                            , Css.property "z-index" "2"
+                            ]

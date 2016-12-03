@@ -31,5 +31,12 @@ type alias Animator =
 -}
 fade : Animator
 fade completion =
-    Css.asPairs
-        [ Css.opacity (Css.num completion) ]
+    let
+        blur completion =
+            "blur(" ++ (toString <| Basics.round <| (1 - completion) * 20) ++ "px)"
+    in
+        Css.asPairs
+            [ Css.opacity (Css.num completion)
+            , Css.property "filter" (blur completion)
+            , Css.property "-webkit-filter" (blur completion)
+            ]

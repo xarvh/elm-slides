@@ -53,7 +53,7 @@ main = Slides.app
         # Easy app setup
 
         ```elm
-            $ elm-package install elm-lang/html
+        $ elm-package install elm-lang/html
         ```
 
         And we're ready to go!
@@ -91,12 +91,12 @@ main = Slides.app
         """
         # Official libraries for most common tasks
 
-            * Virtual DOM
-            * SVG rendering
-            * Markdown
-            * Http
-            * Geolocation
-            * Websockets
+        * Virtual DOM
+        * SVG rendering
+        * Markdown
+        * Http
+        * Geolocation
+        * Websockets
         """
 
 
