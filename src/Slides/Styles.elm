@@ -59,13 +59,13 @@ elmMinimalist backgroundColorArg codeBackgroundColorArg fontSizeArg colorArg =
         [ height (pct 100)
         , width (pct 100)
         , backgroundColor backgroundColorArg
-        , property "background-position" "center"
-        , property "background-size" "cover"
+        , backgroundPosition center
+        , backgroundSize cover
         , displayFlex
-        , property "justify-content" "center"
+        , justifyContent center
         , alignItems center
         ]
-    , (.) "slide-content"
+    , class "slide-content"
         [ margin2 zero (pct 10)
         ]
     , code
