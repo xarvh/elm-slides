@@ -1,9 +1,23 @@
 import Slides exposing (md, mdFragments, slidesDefaultOptions)
+import Slides.Styles
+import Slides.SlideAnimation
+import List
+
+import Css exposing (..)
+import Css.Elements exposing (img)
 
 
 main = Slides.app
 
-    slidesDefaultOptions
+    { slidesDefaultOptions
+        | style = List.append
+             [ img
+                [ maxWidth (px 500)
+                ]
+             ]
+             <| Slides.Styles.elmMinimalist (hex "#fff") (hex "#ccc") (px 16) (hex "#000")
+        , slideAnimator = Slides.SlideAnimation.scroll
+    }
 
     [ md
         """
@@ -61,7 +75,8 @@ main = Slides.app
         """
 
 
-    , md """
+    , md
+        """
 
         # Single-step build
 
