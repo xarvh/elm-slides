@@ -3,12 +3,13 @@ module Slides
         ( app
         , Options
         , slidesDefaultOptions
+        , Slide
         , md
         , mdFragments
         , html
         , htmlFragments
           -- TEA
-        , Msg(..)
+        , Msg(First, Last, Next, Prev)
         , Model
         , init
         , update
@@ -17,15 +18,23 @@ module Slides
         )
 
 {-|
+
+
 # Main API
-@docs app, md, mdFragments, html, htmlFragments
+
+@docs app, Slide, md, mdFragments, html, htmlFragments
+
 
 # Options
+
 @docs Options, slidesDefaultOptions
 
+
 # Elm Architecture
+
 Normally used with [Navigation.program](http://package.elm-lang.org/packages/elm-lang/navigation/1.0.0/Navigation#program)
 @docs Msg, Model, init, update, view, subscriptions
+
 -}
 
 import AnimationFrame
@@ -49,14 +58,43 @@ import Time
 import Window
 
 
---
--- Model
---
+-- types
+
+
+type alias PrivateSlide =
+    { fragments : List (Html Msg)
+    }
 
 
 {-| -}
-type alias Model =
-    { slides : Array Slide
+type Slide
+    = Slide PrivateSlide
+
+
+{-| -}
+type Msg
+    = Noop
+    | First
+    | Last
+    | Next
+    | Prev
+    | PauseAnimation
+    | AnimationTick Time.Time
+    | WindowResizes Window.Size
+    | NewLocation Navigation.Location
+
+
+
+-- model
+
+
+{-| -}
+type Model
+    = Model PrivateModel
+
+
+type alias PrivateModel =
+    { slides : Array PrivateSlide
     , windowSize : Window.Size
     , isPaused : Bool
     , slideAnimation : SmoothAnimator.Model
@@ -64,28 +102,28 @@ type alias Model =
     }
 
 
-{-|
-Configuration options:
+{-| Configuration options:
 
-* `style` &mdash; A list of [elm-css](http://package.elm-lang.org/packages/rtfeldman/elm-css/latest) `Snippets` to apply.
-  Use [] if you want to use an external CSS.
-  The `Slides.Style` module contains some preset styles ready to use.
+  - `style` &mdash; A list of [elm-css](http://package.elm-lang.org/packages/rtfeldman/elm-css/latest) `Snippets` to apply.
+    Use [] if you want to use an external CSS.
+    The `Slides.Style` module contains some preset styles ready to use.
 
-* `slideAnimator` &mdash; The function used to customize the slide animation.
-  The `Slides.SlideAnimation` module contains some preset animators and the information for writing custom ones.
+  - `slideAnimator` &mdash; The function used to customize the slide animation.
+    The `Slides.SlideAnimation` module contains some preset animators and the information for writing custom ones.
 
-* `fragmentAnimator` &mdash; the function used to animate a fragment within a slide.
-  The `Slides.FragmentAnimation` module contains some preset animators and the information for writing custom ones.
+  - `fragmentAnimator` &mdash; the function used to animate a fragment within a slide.
+    The `Slides.FragmentAnimation` module contains some preset animators and the information for writing custom ones.
 
-* `easingFunction` &mdash; Any f : [0, 1] -> [0, 1]
-  The standard ones are available in Elm's [easing-functions](http://package.elm-lang.org/packages/elm-community/easing-functions/1.0.1/).
+  - `easingFunction` &mdash; Any f : [0, 1] -> [0, 1]
+    The standard ones are available in Elm's [easing-functions](http://package.elm-lang.org/packages/elm-community/easing-functions/1.0.1/).
 
-* `animationDuration` &mdash; the `Time` duration of a slide or fragment animation.
+  - `animationDuration` &mdash; the `Time` duration of a slide or fragment animation.
 
-* `slidePixelSize` &mdash; `width` and `height` geometry of the slide area, in pixel.
-   While the slide will be scaled to the window size, the internal coordinates of the slide will refer to these values.
+  - `slidePixelSize` &mdash; `width` and `height` geometry of the slide area, in pixel.
+    While the slide will be scaled to the window size, the internal coordinates of the slide will refer to these values.
 
-* `keyCodesToMsg` &mdash; a map of all Msg and the key codes that can trigger them.
+  - `keyCodesToMsg` &mdash; a map of all Msg and the key codes that can trigger them.
+
 -}
 type alias Options =
     { style : List Css.Snippet
@@ -98,83 +136,58 @@ type alias Options =
     }
 
 
-type alias Slide =
-    { fragments : List (Html Msg)
-    }
+
+-- defaults
 
 
+{-| Default configuration options.
 
---
--- Msg
---
+    slidesDefaultOptions =
+        { style =
+            Slides.Styles.elmBlueOnWhite
+        , slideAnimator =
+            SlideAnimation.verticalDeck
+        , fragmentAnimator =
+            FragmentAnimation.fade
+        , easingFunction =
+            Ease.inOutCubic
+        , animationDuration =
+            500 * Time.millisecond
+        , slidePixelSize =
+            { height = 700
+            , width = 960
+            }
+        , keyCodesToMsg =
+            [ { msg = First
+              , keyCodes =
+                    [ 36 ]
 
+              -- Home
+              }
+            , { msg = Last
+              , keyCodes =
+                    [ 35 ]
 
-{-| -}
-type Msg
-    = Noop
-    | First
-    | Last
-    | Next
-    | Prev
-    | AnimationTick Time.Time
-    | PauseAnimation
-    | WindowResizes Window.Size
-    | NewLocation Navigation.Location
+              -- End
+              }
+            , { msg = Next
+              , keyCodes =
+                    [ 13, 32, 39, 76, 68 ]
 
+              -- Enter, Spacebar, Arrow Right, l, d
+              }
+            , { msg = Prev
+              , keyCodes =
+                    [ 37, 72, 65 ]
 
-
---
--- Defaults
---
-
-
-{-|
-
-Default configuration options.
-
-```
-slidesDefaultOptions =
-    { style =
-        Slides.Styles.elmBlueOnWhite
-    , slideAnimator =
-        SlideAnimation.verticalDeck
-    , fragmentAnimator =
-        FragmentAnimation.fade
-    , easingFunction =
-        Ease.inOutCubic
-    , animationDuration =
-        500 * Time.millisecond
-    , slidePixelSize =
-        { height = 700
-        , width = 960
+              -- Arrow Left, h, a
+              }
+            , { msg = PauseAnimation
+              , keyCodes = [ 80 ]
+              }
+            ]
         }
-    , keyCodesToMsg =
-        [ { msg = First
-          , keyCodes =
-                [ 36 ]
-                -- Home
-          }
-        , { msg = Last
-          , keyCodes =
-                [ 35 ]
-                -- End
-          }
-        , { msg = Next
-          , keyCodes =
-                [ 13, 32, 39, 76, 68 ]
-                -- Enter, Spacebar, Arrow Right, l, d
-          }
-        , { msg = Prev
-          , keyCodes =
-                [ 37, 72, 65 ]
-                -- Arrow Left, h, a
-          }
-        , { msg = PauseAnimation
-          , keyCodes = [ 80 ]
-          }
-        ]
-    }
-```
+
 -}
 slidesDefaultOptions : Options
 slidesDefaultOptions =
@@ -196,22 +209,26 @@ slidesDefaultOptions =
         [ { msg = First
           , keyCodes =
                 [ 36 ]
-                -- Home
+
+          -- Home
           }
         , { msg = Last
           , keyCodes =
                 [ 35 ]
-                -- End
+
+          -- End
           }
         , { msg = Next
           , keyCodes =
                 [ 13, 32, 39, 76, 68 ]
-                -- Enter, Spacebar, Arrow Right, l, d
+
+          -- Enter, Spacebar, Arrow Right, l, d
           }
         , { msg = Prev
           , keyCodes =
                 [ 37, 72, 65 ]
-                -- Arrow Left, h, a
+
+          -- Arrow Left, h, a
           }
         , { msg = PauseAnimation
           , keyCodes = [ 80 ]
@@ -221,83 +238,73 @@ slidesDefaultOptions =
 
 
 
---
--- API: Html slide constructor
---
+-- slide constructors
 
 
-{-|
-Creates a single slide from a DOM node.
+{-| Creates a single slide from a DOM node.
 
 Can be used to create custom slides constructors (yes, it is used internally by `md` and `mdMarkdown`).
-```
-import Html exposing (..)
 
-slide1 = Slides.html <|
-     div
-        []
-        [ h1 [] [ text "Hello, I am the slide header" ]
-        , div [] [ text "and I am some content" ]
-        ]
-```
+    import Html exposing (..)
+
+    slide1 =
+        Slides.html <|
+            div
+                []
+                [ h1 [] [ text "Hello, I am the slide header" ]
+                , div [] [ text "and I am some content" ]
+                ]
+
 -}
 html : Html Msg -> Slide
 html htmlNode =
     htmlFragments [ htmlNode ]
 
 
-{-|
-Creates a single slide made by several fragments, which are displayed in sequence, one after the other.
-```
-slide2 = Slides.htmlFragments
-    [ div [] [ text "I am always visible when the slide is visible" ]
-    , div [] [ text "Then I appear"
-    , div [] [ text "and then I appear!"
-    ]
-```
+{-| Creates a single slide made by several fragments, which are displayed in sequence, one after the other.
+
+    slide2 = Slides.htmlFragments
+        [ div [] [ text "I am always visible when the slide is visible" ]
+        , div [] [ text "Then I appear"
+        , div [] [ text "and then I appear!"
+        ]
+
 -}
 htmlFragments : List (Html Msg) -> Slide
 htmlFragments htmlNodes =
-    { fragments = htmlNodes }
+    Slide { fragments = htmlNodes }
 
 
-
---
--- API: Markdown slide constructor
---
-
-
-{-|
-Creates a slide from a Markdown string.
+{-| Creates a slide from a Markdown string.
 
 It uses [elm-markdown](http://package.elm-lang.org/packages/evancz/elm-markdown/3.0.0/)
 so you can enable syntax highlightning by including [highlight.js](https://highlightjs.org/).
 
 It automatically removes indentation from multi-line strings.
 
-```
-slide3 = Slides.md
-    """
-    # Hello! I am a header
-    *and I am emph!*
-    """
-```
+    slide3 =
+        Slides.md
+            """
+        # Hello! I am a header
+        *and I am emph!*
+        """
+
 -}
 md : String -> Slide
 md markdownContent =
     mdFragments [ markdownContent ]
 
 
-{-|
-Turns several Markdown strings into a single slide made by several fragments,
+{-| Turns several Markdown strings into a single slide made by several fragments,
 which will appear one after another:
-```
-slide4 = Slides.mdFragments
-    [ "I am always visible"
-    , "Then I appear"
-    , "and Then I"
-    ]
-```
+
+    slide4 =
+        Slides.mdFragments
+            [ "I am always visible"
+            , "Then I appear"
+            , "and Then I"
+            ]
+
 -}
 mdFragments : List String -> Slide
 mdFragments markdownFragments =
@@ -319,12 +326,10 @@ mdFragments markdownFragments =
 
 
 
---
--- Helpers
---
+-- helpers
 
 
-scale : Options -> Model -> Float
+scale : Options -> PrivateModel -> Float
 scale options model =
     min
         (toFloat model.windowSize.width / toFloat options.slidePixelSize.width)
@@ -336,28 +341,31 @@ locationToSlideIndex location =
     String.dropLeft 1 location.hash |> String.toInt |> Result.toMaybe
 
 
-modelToHashUrl : Model -> String
+modelToHashUrl : PrivateModel -> String
 modelToHashUrl model =
     "#" ++ toString model.slideAnimation.targetPosition
 
 
-slideByIndex : Model -> Int -> Slide
+slideByIndex : PrivateModel -> Int -> PrivateSlide
 slideByIndex model index =
-    Maybe.withDefault (md "") <| Array.get index model.slides
+    Array.get index model.slides |> Maybe.withDefault (PrivateSlide [])
 
 
-slideDistance : Model -> Float
+slideDistance : PrivateModel -> Float
 slideDistance model =
     toFloat model.slideAnimation.targetPosition - model.slideAnimation.currentPosition
 
 
 
---
--- Update
---
+-- update
 
 
-slideAnimatorUpdate : Options -> Model -> SmoothAnimator.Msg -> ( Model, Cmd Msg )
+noCmd : PrivateModel -> ( PrivateModel, Cmd a )
+noCmd m =
+    ( m, Cmd.none )
+
+
+slideAnimatorUpdate : Options -> PrivateModel -> SmoothAnimator.Msg -> ( PrivateModel, Cmd Msg )
 slideAnimatorUpdate options oldParentModel childMsg =
     let
         duration =
@@ -391,7 +399,7 @@ slideAnimatorUpdate options oldParentModel childMsg =
         ( newParentModel, cmd )
 
 
-fragmentAnimatorUpdate : Int -> Options -> Model -> SmoothAnimator.Msg -> ( Model, Cmd Msg )
+fragmentAnimatorUpdate : Int -> Options -> PrivateModel -> SmoothAnimator.Msg -> ( PrivateModel, Cmd Msg )
 fragmentAnimatorUpdate maximumPosition options oldParentModel msg =
     let
         newChildModel =
@@ -400,10 +408,10 @@ fragmentAnimatorUpdate maximumPosition options oldParentModel msg =
         newParentModel =
             { oldParentModel | fragmentAnimation = newChildModel }
     in
-        ( newParentModel, Cmd.none )
+        noCmd newParentModel
 
 
-resetFragments : Float -> Model -> Model
+resetFragments : Float -> PrivateModel -> PrivateModel
 resetFragments distance oldModel =
     let
         newPosition =
@@ -417,11 +425,8 @@ resetFragments distance oldModel =
 
 {-| -}
 update : Options -> Msg -> Model -> ( Model, Cmd Msg )
-update options msg oldModel =
+update options msg (Model oldModel) =
     let
-        noCmd m =
-            ( m, Cmd.none )
-
         maximumPosition =
             List.length (slideByIndex oldModel oldModel.slideAnimation.targetPosition).fragments - 1
 
@@ -434,78 +439,81 @@ update options msg oldModel =
             else
                 fragmentAnimatorUpdate maximumPosition options oldModel msg
     in
-        case msg of
-            Noop ->
-                noCmd oldModel
-
-            First ->
-                mixedUpdater True SmoothAnimator.SelectFirst
-
-            Last ->
-                mixedUpdater True SmoothAnimator.SelectLast
-
-            Prev ->
-                mixedUpdater (oldModel.fragmentAnimation.targetPosition - 1 < 0) SmoothAnimator.SelectPrev
-
-            Next ->
-                mixedUpdater (oldModel.fragmentAnimation.targetPosition + 1 > maximumPosition) SmoothAnimator.SelectNext
-
-            WindowResizes size ->
-                noCmd <| { oldModel | windowSize = size }
-
-            PauseAnimation ->
-                noCmd { oldModel | isPaused = not oldModel.isPaused }
-
-            AnimationTick deltaTime ->
-                if oldModel.isPaused then
+        Tuple.mapFirst Model <|
+            case msg of
+                Noop ->
                     noCmd oldModel
-                else
-                    let
-                        distance =
-                            slideDistance oldModel
 
-                        ( m, cmd ) =
-                            mixedUpdater False (SmoothAnimator.AnimationTick deltaTime)
+                First ->
+                    mixedUpdater True SmoothAnimator.SelectFirst
 
-                        newModel =
-                            (if distance /= 0 then
-                                resetFragments distance
-                             else
-                                identity
-                            )
-                                m
-                    in
-                        ( newModel, cmd )
+                Last ->
+                    mixedUpdater True SmoothAnimator.SelectLast
 
-            NewLocation location ->
-                case locationToSlideIndex location of
-                    -- User entered an url we can't parse as index
-                    Nothing ->
-                        ( oldModel, Navigation.modifyUrl <| modelToHashUrl oldModel )
+                Prev ->
+                    mixedUpdater (oldModel.fragmentAnimation.targetPosition - 1 < 0) SmoothAnimator.SelectPrev
 
-                    Just index ->
-                        slideAnimatorUpdate options oldModel <| SmoothAnimator.SelectExact index
+                Next ->
+                    mixedUpdater (oldModel.fragmentAnimation.targetPosition + 1 > maximumPosition) SmoothAnimator.SelectNext
+
+                WindowResizes size ->
+                    noCmd <| { oldModel | windowSize = size }
+
+                PauseAnimation ->
+                    noCmd { oldModel | isPaused = not oldModel.isPaused }
+
+                AnimationTick deltaTime ->
+                    if oldModel.isPaused then
+                        noCmd oldModel
+                    else
+                        let
+                            distance =
+                                slideDistance oldModel
+
+                            ( m, cmd ) =
+                                mixedUpdater False (SmoothAnimator.AnimationTick deltaTime)
+
+                            newModel =
+                                (if distance /= 0 then
+                                    resetFragments distance
+                                 else
+                                    identity
+                                )
+                                    m
+                        in
+                            ( newModel, cmd )
+
+                NewLocation location ->
+                    case locationToSlideIndex location of
+                        -- User entered an url we can't parse as index
+                        Nothing ->
+                            ( oldModel, Navigation.modifyUrl <| modelToHashUrl oldModel )
+
+                        Just index ->
+                            slideAnimatorUpdate options oldModel <| SmoothAnimator.SelectExact index
 
 
---
--- Init
---
+
+-- init
 
 
 {-| -}
 init : Options -> List Slide -> Navigation.Location -> ( Model, Cmd Msg )
-init options slides location =
+init options wrappedSlides location =
     let
+        unwrapSlide (Slide privateSlide) =
+            privateSlide
+
         model0 =
-            { slides = Array.fromList slides
+            { slides = wrappedSlides |> List.map unwrapSlide |> Array.fromList
             , windowSize = options.slidePixelSize
             , isPaused = False
             , slideAnimation = SmoothAnimator.init 0
             , fragmentAnimation = SmoothAnimator.init 0
             }
 
-        ( model, urlCmd ) =
-            update options (NewLocation location) model0
+        ( Model model, urlCmd ) =
+            update options (NewLocation location) (Model model0)
 
         slidePosition0 =
             model.slideAnimation.targetPosition
@@ -516,13 +524,11 @@ init options slides location =
         cmdWindow =
             Task.perform WindowResizes Window.size
     in
-        ( { model | slideAnimation = slideAnimation }, Cmd.batch [ cmdWindow, urlCmd ] )
+        ( Model { model | slideAnimation = slideAnimation }, Cmd.batch [ cmdWindow, urlCmd ] )
 
 
 
---
--- View
---
+-- view
 
 
 slideSection styleAttributes fragments =
@@ -612,7 +618,7 @@ slideViewStill options model =
 
 {-| -}
 view : Options -> Model -> Html Msg
-view options model =
+view options (Model model) =
     let
         slideView =
             if slideDistance model == 0 then
@@ -651,9 +657,7 @@ view options model =
 
 
 
---
--- Subscriptions
---
+-- subscriptions
 
 
 keyPressDispatcher keyCodeMap keyCode =
@@ -668,7 +672,7 @@ keyPressDispatcher keyCodeMap keyCode =
             Noop
 
 
-mouseClickDispatcher : Options -> Model -> Mouse.Position -> Msg
+mouseClickDispatcher : Options -> PrivateModel -> Mouse.Position -> Msg
 mouseClickDispatcher options model position =
     let
         s =
@@ -721,7 +725,7 @@ mouseClickDispatcher options model position =
 
 {-| -}
 subscriptions : Options -> Model -> Sub Msg
-subscriptions options model =
+subscriptions options (Model model) =
     Sub.batch
         -- TODO: switch to Keyboard.presses once https://github.com/elm-lang/keyboard/issues/3 is fixed
         [ Keyboard.ups (keyPressDispatcher options.keyCodesToMsg)
@@ -732,21 +736,18 @@ subscriptions options model =
 
 
 
---
 -- `main` helper
---
 
 
-{-|
-Does all the wiring for you, returning a `Program` ready to run.
-```
-main = Slides.app
-    Slides.slidesDefaultOptions
-    [ slide1
-    , slide2
-    , ...
-    ]
-```
+{-| Does all the wiring for you, returning a `Program` ready to run.
+
+    main = Slides.app
+        Slides.slidesDefaultOptions
+        [ slide1
+        , slide2
+        , ...
+        ]
+
 -}
 app : Options -> List Slide -> Program Never Model Msg
 app options slides =
