@@ -73,7 +73,7 @@ elmMinimalist backgroundColorArg codeBackgroundColorArg fontSizeArg colorArg =
         , fontSize fontSizeArg
         , backgroundColor codeBackgroundColorArg
         ]
-    , pre
+    , Css.Elements.pre
         [ padding (pct 2)
         , fontSize fontSizeArg
         , backgroundColor codeBackgroundColorArg
