@@ -1,7 +1,5 @@
 module SmoothAnimator exposing (..)
 
-import Time
-
 
 type alias Model =
     { initialPosition : Int
@@ -21,10 +19,10 @@ type Msg
     | SelectLast
     | SelectNext
     | SelectPrev
-    | AnimationTick Time.Time
+    | AnimationTick Float
 
 
-newPosition : Time.Time -> Model -> Time.Time -> Float
+newPosition : Float -> Model -> Float -> Float
 newPosition duration m deltaTime =
     let
         totalDistance =
@@ -51,41 +49,41 @@ newPosition duration m deltaTime =
         newUnclampedPosition =
             m.currentPosition + deltaPosition
     in
-        -- either min or max, depending on the direction we're going
-        limitBetween newUnclampedPosition (toFloat m.targetPosition)
+    -- either min or max, depending on the direction we're going
+    limitBetween newUnclampedPosition (toFloat m.targetPosition)
 
 
-update : Time.Time -> Int -> Msg -> Model -> Model
+update : Float -> Int -> Msg -> Model -> Model
 update duration maximumPosition msg oldModel =
     let
         select unclampedTargetPosition =
             { oldModel | targetPosition = clamp 0 maximumPosition unclampedTargetPosition }
     in
-        case msg of
-            SelectExact index ->
-                select index
+    case msg of
+        SelectExact index ->
+            select index
 
-            SelectFirst ->
-                select 0
+        SelectFirst ->
+            select 0
 
-            SelectLast ->
-                select 99999
+        SelectLast ->
+            select 99999
 
-            SelectPrev ->
-                select <| oldModel.targetPosition - 1
+        SelectPrev ->
+            select <| oldModel.targetPosition - 1
 
-            SelectNext ->
-                select <| oldModel.targetPosition + 1
+        SelectNext ->
+            select <| oldModel.targetPosition + 1
 
-            AnimationTick deltaTime ->
-                let
-                    currentPosition =
-                        newPosition duration oldModel deltaTime
+        AnimationTick deltaTime ->
+            let
+                currentPosition =
+                    newPosition duration oldModel deltaTime
 
-                    initialPosition =
-                        if currentPosition /= toFloat oldModel.targetPosition then
-                            oldModel.initialPosition
-                        else
-                            oldModel.targetPosition
-                in
-                    { oldModel | currentPosition = currentPosition, initialPosition = initialPosition }
+                initialPosition =
+                    if currentPosition /= toFloat oldModel.targetPosition then
+                        oldModel.initialPosition
+                    else
+                        oldModel.targetPosition
+            in
+            { oldModel | currentPosition = currentPosition, initialPosition = initialPosition }

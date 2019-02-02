@@ -4,16 +4,14 @@ import Slides.SlideAnimation
 import List
 
 import Css exposing (..)
-import Css.Elements exposing (img)
+import Css.Global exposing (img)
 
 
 main = Slides.app
 
     { slidesDefaultOptions
         | style = List.append
-             [ img
-                [ maxWidth (px 500)
-                ]
+             [ img [ maxWidth (px 500) ]
              ]
              <| Slides.Styles.elmMinimalist (hex "#fff") (hex "#ccc") (px 16) (hex "#000")
         , slideAnimator = Slides.SlideAnimation.scroll
