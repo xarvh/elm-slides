@@ -29,14 +29,14 @@ import Html.Styled exposing (..)
 -}
 whiteOnBlack : List Snippet
 whiteOnBlack =
-    elmMinimalist (rgb 255 255 255) (rgb 230 230 230) (px 30) (hex "fafafb")
+    elmMinimalist (rgb 0 0 0) (rgb 230 230 230) (px 30) (rgb 255 255 255)
 
 
 {-| Elm Minimalist, black text on white background
 -}
 blackOnWhite : List Snippet
 blackOnWhite =
-    elmMinimalist (rgb 255 255 255) (rgb 230 230 230) (px 30) (hex "60B5CC")
+    elmMinimalist (rgb 255 255 255) (rgb 230 230 230) (px 30) (rgb 0 0 0)
 
 
 {-| Elm Minimalist, Elm blue on white background
@@ -47,7 +47,8 @@ elmBlueOnWhite =
 
 
 {-| A minimalist, clean style.
-You can customise it by specifying colors and font size
+You can customise it by specifying the background color, the background color for
+code samples, the font size, and finally the foreground color.
 -}
 elmMinimalist : ColorValue a -> ColorValue b -> FontSize c -> ColorValue d -> List Snippet
 elmMinimalist backgroundColorArg codeBackgroundColorArg fontSizeArg colorArg =
