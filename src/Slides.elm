@@ -251,7 +251,9 @@ slidesDefaultOptions =
 
 Can be used to create custom slides constructors (yes, it is used internally by `md` and `mdMarkdown`).
 
-    import Html exposing (..)
+Note: `Html.Styled` is provided by [elm-css](https://package.elm-lang.org/packages/rtfeldman/elm-css/latest)
+
+    import Html.Styled as Html exposing (..)
 
     slide1 =
         Slides.html <|
@@ -269,11 +271,12 @@ html htmlNode =
 
 {-| Creates a single slide made by several fragments, which are displayed in sequence, one after the other.
 
-    slide2 = Slides.htmlFragments
-        [ div [] [ text "I am always visible when the slide is visible" ]
-        , div [] [ text "Then I appear"
-        , div [] [ text "and then I appear!"
-        ]
+    slide2 =
+        Slides.htmlFragments
+            [ div [] [ text "I am always visible when the slide is visible" ]
+            , div [] [ text "Then I appear" ]
+            , div [] [ text "and then I appear!" ]
+            ]
 
 -}
 htmlFragments : List (Html Msg) -> Slide
@@ -291,9 +294,9 @@ It automatically removes indentation from multi-line strings.
     slide3 =
         Slides.md
             """
-        # Hello! I am a header
-        *and I am emph!*
-        """
+            # Hello! I am a header
+            *and I am emph!*
+            """
 
 -}
 md : String -> Slide
@@ -821,12 +824,13 @@ singleToUpper s =
 
 {-| Does all the wiring for you, returning a `Program` ready to run.
 
-    main = Slides.app
-        Slides.slidesDefaultOptions
-        [ slide1
-        , slide2
-        , ...
-        ]
+    main =
+        Slides.app
+            Slides.slidesDefaultOptions
+            [ slide1
+            , slide2
+            , ...
+            ]
 
 -}
 app : Options -> List Slide -> Program () Model Msg

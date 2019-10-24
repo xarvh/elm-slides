@@ -1,4 +1,1 @@
-To build the example, run (from the repo root):
-```
-elm-make --yes examples/Main.elm
-```
+To build the example run `elm reactor` from the directory that contains `elm.json`.

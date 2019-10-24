@@ -27,7 +27,11 @@ import Slides.Blur
 
     fade : Animator
     fade completion =
-        [ ( "opacity", toString completion ) ]
+        Css.batch
+            [ Css.opacity (Css.num completion)
+            , Css.property "filter" (Slides.Blur.blur completion)
+            , Css.property "-webkit-filter" (Slides.Blur.blur completion)
+            ]
 
 -}
 type alias Animator =
