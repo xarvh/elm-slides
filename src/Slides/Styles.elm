@@ -61,6 +61,7 @@ elmMinimalist backgroundColorArg codeBackgroundColorArg fontSizeArg colorArg =
         , fontFamilies [ "calibri", "sans-serif" ]
         , fontSize fontSizeArg
         , fontWeight (int 400)
+        , property "user-select" "none"
         ]
     , Css.Global.h1
         [ fontWeight (int 400)
