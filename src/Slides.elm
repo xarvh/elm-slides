@@ -144,6 +144,9 @@ getCurrentSlide (Model model) =
 
   - `keysToActions` &mdash; a map of all Msg and the key codes that can trigger them.
 
+  - `clickToNavigate` &mdash; if `True` clicking on the bottom-right half of the screen will navigate to the next page, while clicking on the top-left half will navigate to the previous page.
+    This is useful if you want to embed the view somewhere.
+
 -}
 type alias Options =
     { title : String
@@ -154,6 +157,7 @@ type alias Options =
     , animationDuration : Float
     , slidePixelSize : { height : Int, width : Int }
     , keysToActions : List { action : Action, keys : List String }
+    , clickToNavigate : Bool
     }
 
 
@@ -198,6 +202,8 @@ type alias Options =
               , keys = [ "p" ]
               }
             ]
+        , clickToNavigate =
+            True
         }
 
 -}
@@ -236,6 +242,8 @@ slidesDefaultOptions =
           , keys = [ "p" ]
           }
         ]
+    , clickToNavigate =
+        True
     }
 
 
@@ -791,8 +799,12 @@ subscriptions : Options -> Model -> Sub Msg
 subscriptions options (Model model) =
     Sub.batch
         [ Browser.Events.onKeyUp (keyboardDecoder (keyNameToMsgDecoder options.keysToActions))
-        , Browser.Events.onClick (mousePositionDecoder (mouseClickDispatcher options model >> OnAction))
         , Browser.Events.onResize (\w h -> WindowResizes { width = w, height = h })
+        , if options.clickToNavigate then
+            Browser.Events.onClick (mousePositionDecoder (mouseClickDispatcher options model >> OnAction))
+
+          else
+            Sub.none
         , if SmoothAnimator.isIdle model.slideAnimation && SmoothAnimator.isIdle model.fragmentAnimation then
             Sub.none
 
