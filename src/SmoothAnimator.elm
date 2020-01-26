@@ -8,6 +8,11 @@ type alias Model =
     }
 
 
+isIdle : Model -> Bool
+isIdle model =
+    model.currentPosition == toFloat model.targetPosition
+
+
 init : Int -> Model
 init position =
     Model position position (toFloat position)
@@ -37,6 +42,7 @@ newPosition duration m deltaTime =
         ( direction, limitBetween ) =
             if distance > 0 then
                 ( 1, min )
+
             else
                 ( -1, max )
 
@@ -83,6 +89,7 @@ update duration maximumPosition msg oldModel =
                 initialPosition =
                     if currentPosition /= toFloat oldModel.targetPosition then
                         oldModel.initialPosition
+
                     else
                         oldModel.targetPosition
             in

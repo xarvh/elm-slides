@@ -1,22 +1,9 @@
-module Slides
-    exposing
-        ( Action
-        , Model
-        , Msg
-        , Options
-        , Slide
-        , actionToMsg
-        , app
-        , html
-        , htmlFragments
-        , init
-        , md
-        , mdFragments
-        , slidesDefaultOptions
-        , subscriptions
-        , update
-        , view
-        )
+module Slides exposing
+    ( app, Slide, md, mdFragments, html, htmlFragments
+    , Options, slidesDefaultOptions, Action(..)
+    , Msg, actionToMsg, Model, init, update, view, subscriptions
+    , getCurrentSlide
+    )
 
 {-|
 
@@ -34,6 +21,7 @@ module Slides
 # Elm Architecture
 
 Normally used with [Navigation.program](http://package.elm-lang.org/packages/elm-lang/navigation/1.0.0/Navigation#program)
+
 @docs Msg, actionToMsg, Model, init, update, view, subscriptions
 
 -}
@@ -58,6 +46,7 @@ import String
 import StringUnindent
 import Task
 import Url exposing (Url)
+
 
 
 -- types
@@ -124,6 +113,13 @@ type alias PrivateModel =
     , fragmentAnimation : SmoothAnimator.Model
     , key : Key
     }
+
+
+{-| Get the currently displayed slide number
+-}
+getCurrentSlide : Model -> Int
+getCurrentSlide (Model model) =
+    model.slideAnimation.targetPosition
 
 
 {-| Configuration options:
@@ -397,6 +393,7 @@ slideAnimatorUpdate options oldParentModel childMsg =
         cmd =
             if newChildModel.targetPosition == currentIndexInUrl then
                 Cmd.none
+
             else
                 cmdReplaceUrlWithCurrentSlideIndex newParentModel
     in
@@ -421,6 +418,7 @@ resetFragments distance oldModel =
         newPosition =
             if distance > 0 then
                 0
+
             else
                 List.length (slideByIndex oldModel oldModel.slideAnimation.targetPosition).fragments - 1
     in
@@ -444,6 +442,7 @@ update options msg (Model oldModel) =
             AnimationTick deltaTime ->
                 if oldModel.isPaused then
                     noCmd oldModel
+
                 else
                     let
                         distance =
@@ -458,6 +457,7 @@ update options msg (Model oldModel) =
                         newModel =
                             (if distance /= 0 then
                                 resetFragments distance
+
                              else
                                 identity
                             )
@@ -487,6 +487,7 @@ updateSlideOrFragmentAnimator options { isAboutToChangeSlides } animatorMsg mode
     in
     if isAlreadyChangingSlides || isAboutToChangeSlides then
         slideAnimatorUpdate options model animatorMsg
+
     else
         fragmentAnimatorUpdate (maximumSlidePosition model) options model animatorMsg
 
@@ -637,8 +638,10 @@ slideViewMotion options model =
         easing =
             if abs distance > 1 then
                 identity
+
             else if distance >= 0 then
                 options.easingFunction
+
             else
                 Ease.flip options.easingFunction
 
@@ -649,6 +652,7 @@ slideViewMotion options model =
                 model.slideAnimation.currentPosition
                     - (if distance > 0 then
                         0
+
                        else
                         0.000001
                       )
@@ -660,6 +664,7 @@ slideViewMotion options model =
         ( smallerDirection, largerDirection ) =
             if distance > 0 then
                 ( SlideAnimation.Outgoing, SlideAnimation.Incoming )
+
             else
                 ( SlideAnimation.Incoming, SlideAnimation.Outgoing )
 
@@ -691,6 +696,7 @@ view options (Model model) =
         slideView =
             if slideDistance model == 0 then
                 slideViewStill
+
             else
                 slideViewMotion
     in
@@ -771,6 +777,7 @@ mouseClickDispatcher options model position =
     in
     if isAbove then
         GotoPrev
+
     else
         GotoNext
 
@@ -786,7 +793,11 @@ subscriptions options (Model model) =
         [ Browser.Events.onKeyUp (keyboardDecoder (keyNameToMsgDecoder options.keysToActions))
         , Browser.Events.onClick (mousePositionDecoder (mouseClickDispatcher options model >> OnAction))
         , Browser.Events.onResize (\w h -> WindowResizes { width = w, height = h })
-        , Browser.Events.onAnimationFrameDelta AnimationTick
+        , if SmoothAnimator.isIdle model.slideAnimation && SmoothAnimator.isIdle model.fragmentAnimation then
+            Sub.none
+
+          else
+            Browser.Events.onAnimationFrameDelta AnimationTick
         ]
 
 
@@ -806,6 +817,7 @@ keyNameToMsgDecoder keyMap keyName =
         keyMapEntry :: km ->
             if List.member (String.toLower keyName) (List.map String.toLower keyMapEntry.keys) then
                 Json.Decode.succeed (OnAction keyMapEntry.action)
+
             else
                 keyNameToMsgDecoder km keyName
 
@@ -814,6 +826,7 @@ singleToUpper : String -> String
 singleToUpper s =
     if String.length s /= 1 then
         s
+
     else
         String.toUpper s
 
